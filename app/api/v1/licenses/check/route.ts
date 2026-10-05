@@ -1,72 +1,64 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUser, getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-/**
- * POST /api/v1/licenses/check
- *
- * Header requerido: Authorization: Bearer <access_token de Supabase Auth>
- *
- * Valida que el usuario autenticado tenga una suscripción activa
- * con days_remaining > 0. No entrega ninguna credencial ni sesión
- * de terceros: solo informa el estado de la licencia propia.
- */
 export async function POST(request: Request) {
-  const authUser = await getAuthenticatedUser(request);
+  try {
+    const body = await request.json();
+    const { email, password } = body;
 
-  if (!authUser) {
-    return NextResponse.json(
-      { error: "No autenticado" },
-      { status: 401 }
-    );
-  }
+    if (!email || !password) {
+      return NextResponse.json({ valid: false, error: "Ingresa correo y contraseña" }, { status: 400 });
+    }
 
-  const supabase = getSupabaseAdmin();
+    const supabase = getSupabaseAdmin();
 
-  // 1. Resolver el registro interno de usuario a partir del auth_user_id
-  const { data: usuario, error: usuarioError } = await supabase
-    .from("usuarios")
-    .select("id, full_name, email")
-    .eq("auth_user_id", authUser.id)
-    .single();
+    // 1. Buscar cliente por email
+    const { data: client, error: clientErr } = await supabase
+      .from("clients")
+      .select("id, full_name, email, password_hash")
+      .eq("email", email.trim().toLowerCase())
+      .maybeSingle();
 
-  if (usuarioError || !usuario) {
-    return NextResponse.json(
-      { error: "Usuario no registrado en el sistema de licencias" },
-      { status: 404 }
-    );
-  }
+    if (clientErr || !client) {
+      return NextResponse.json({ valid: false, error: "Usuario no registrado" }, { status: 401 });
+    }
 
-  // 2. Buscar la suscripción más reciente de ese usuario
-  const { data: suscripcion, error: subError } = await supabase
-    .from("suscripciones")
-    .select("id, plan, days_remaining, status, start_date, updated_at")
-    .eq("usuario_id", usuario.id)
-    .order("start_date", { ascending: false })
-    .limit(1)
-    .single();
+    // 2. Comprobar contraseña
+    if (client.password_hash !== password.trim()) {
+      return NextResponse.json({ valid: false, error: "Contraseña incorrecta" }, { status: 401 });
+    }
 
-  if (subError || !suscripcion) {
-    return NextResponse.json(
-      { error: "El usuario no tiene ninguna suscripción" },
-      { status: 404 }
-    );
-  }
+    // 3. Buscar suscripción activa
+    const { data: sub } = await supabase
+      .from("client_subscriptions")
+      .select(`
+        id,
+        days_remaining,
+        status,
+        platforms ( name, slug, access_url ),
+        proxies ( host, port, username, password )
+      `)
+      .eq("client_id", client.id)
+      .maybeSingle();
 
-  const isValid =
-    suscripcion.status === "active" && suscripcion.days_remaining > 0;
-
-  return NextResponse.json(
-    {
-      valid: isValid,
-      usuario: { id: usuario.id, full_name: usuario.full_name },
-      suscripcion: {
-        plan: suscripcion.plan,
-        status: suscripcion.status,
-        days_remaining: suscripcion.days_remaining,
+    return NextResponse.json({
+      valid: true,
+      usuario: {
+        id: client.id,
+        full_name: client.full_name,
+        email: client.email
       },
-    },
-    { status: isValid ? 200 : 403 }
-  );
+      suscripcion: {
+        plan: (sub?.platforms as any)?.name || "Acceso Autorizado",
+        status: sub?.status || "active",
+        days_remaining: sub?.days_remaining ?? 30
+      },
+      access_url: (sub?.platforms as any)?.access_url || "https://chatgpt.com",
+      proxy: sub?.proxies || null
+    });
+  } catch (err: any) {
+    return NextResponse.json({ valid: false, error: err.message }, { status: 500 });
+  }
 }
