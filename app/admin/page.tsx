@@ -2,37 +2,50 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Users, Layers, Plus, Trash2, Key, RefreshCw, 
-  ExternalLink, Calendar, CheckCircle2, AlertTriangle, ShieldCheck 
+  Users, Layers, Server, Plus, Trash2, Key, RefreshCw, 
+  ExternalLink, ShieldCheck, CheckCircle2, AlertTriangle, Shield 
 } from "lucide-react";
 
 export default function AdminConsole() {
-  const [activeTab, setActiveTab] = useState<"clients" | "products">("clients");
+  const [activeTab, setActiveTab] = useState<"clients" | "products" | "proxies">("clients");
   const [loading, setLoading] = useState(true);
   const [platforms, setPlatforms] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [proxies, setProxies] = useState<any[]>([]);
 
   // Modales
   const [showClientModal, setShowClientModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [showProxyModal, setShowProxyModal] = useState(false);
 
-  // Formulario Nuevo Cliente
+  // Formulario Cliente
   const [clientForm, setClientForm] = useState({
     full_name: "",
     email: "",
     password: "",
     platform_id: "",
+    proxy_id: "",
     days: 30
   });
 
-  // Formulario Nuevo Producto
+  // Formulario Producto
   const [productForm, setProductForm] = useState({
     name: "",
     badge: "Activo • Entrega Inmediata",
     description: "",
-    tags: "IA, Productividad",
+    tags: "IA, Pro",
     accent_color: "cyan",
     access_url: "https://chatgpt.com"
+  });
+
+  // Formulario Proxy
+  const [proxyForm, setProxyForm] = useState({
+    name: "",
+    host: "",
+    port: 8080,
+    username: "",
+    password: "",
+    max_users: 5
   });
 
   const fetchData = async () => {
@@ -42,8 +55,9 @@ export default function AdminConsole() {
       const data = await res.json();
       if (data.platforms) setPlatforms(data.platforms);
       if (data.subscriptions) setSubscriptions(data.subscriptions);
+      if (data.proxies) setProxies(data.proxies);
     } catch (err) {
-      console.error("Error al cargar datos:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -72,7 +86,7 @@ export default function AdminConsole() {
       if (!res.ok) throw new Error(data.error);
 
       setShowClientModal(false);
-      setClientForm({ full_name: "", email: "", password: "", platform_id: "", days: 30 });
+      setClientForm({ full_name: "", email: "", password: "", platform_id: "", proxy_id: "", days: 30 });
       fetchData();
     } catch (err: any) {
       alert("Error: " + err.message);
@@ -95,15 +109,37 @@ export default function AdminConsole() {
       if (!res.ok) throw new Error(data.error);
 
       setShowProductModal(false);
-      setProductForm({ name: "", badge: "Activo • Entrega Inmediata", description: "", tags: "IA, Productividad", accent_color: "cyan", access_url: "https://chatgpt.com" });
+      setProductForm({ name: "", badge: "Activo • Entrega Inmediata", description: "", tags: "IA, Pro", accent_color: "cyan", access_url: "https://chatgpt.com" });
       fetchData();
     } catch (err: any) {
       alert("Error: " + err.message);
     }
   };
 
-  const handleDelete = async (id: string, type: "subscription" | "platform") => {
-    if (!confirm(`¿Eliminar este ${type === "platform" ? "producto" : "acceso"} de forma permanente?`)) return;
+  const handleCreateProxy = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/v1/licenses/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "CREATE_PROXY",
+          ...proxyForm
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setShowProxyModal(false);
+      setProxyForm({ name: "", host: "", port: 8080, username: "", password: "", max_users: 5 });
+      fetchData();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
+  };
+
+  const handleDelete = async (id: string, type: "subscription" | "platform" | "proxy") => {
+    if (!confirm("¿Eliminar este registro permanentemente?")) return;
     try {
       const res = await fetch(`/api/v1/licenses/manage?type=${type}&id=${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("No se pudo eliminar");
@@ -131,25 +167,31 @@ export default function AdminConsole() {
     <div className="min-h-screen bg-[#07090E] text-slate-100 p-6 md:p-10 font-sans">
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Cabecera Principal */}
+        {/* Cabecera */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
             <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">
-              <ShieldCheck className="w-4 h-4" /> NexusGate Admin Engine
+              <ShieldCheck className="w-4 h-4" /> NexusGate Admin Console
             </div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Centro de Control de Licencias</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Centro de Control de Licencias & Proxies</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => { setShowClientModal(true); handleGeneratePassword(); }}
-              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] text-sm"
             >
               <Plus className="w-4 h-4" /> Nuevo Acceso Cliente
             </button>
             <button
+              onClick={() => setShowProxyModal(true)}
+              className="bg-slate-800 hover:bg-slate-700 border border-white/10 px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm"
+            >
+              <Server className="w-4 h-4 text-cyan-400" /> Añadir Proxy
+            </button>
+            <button
               onClick={() => setShowProductModal(true)}
-              className="bg-slate-800 hover:bg-slate-700 border border-white/10 px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all"
+              className="bg-slate-800 hover:bg-slate-700 border border-white/10 px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm"
             >
               <Plus className="w-4 h-4 text-emerald-400" /> Añadir Servicio
             </button>
@@ -159,7 +201,7 @@ export default function AdminConsole() {
           </div>
         </div>
 
-        {/* Selector de Pestañas */}
+        {/* Pestañas */}
         <div className="flex gap-2 border-b border-white/5">
           <button
             onClick={() => setActiveTab("clients")}
@@ -167,7 +209,15 @@ export default function AdminConsole() {
               activeTab === "clients" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
-            <Users className="w-4 h-4" /> Clientes & Suscripciones ({subscriptions.length})
+            <Users className="w-4 h-4" /> Clientes ({subscriptions.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("proxies")}
+            className={`pb-3 px-4 font-medium text-sm flex items-center gap-2 border-b-2 transition-all ${
+              activeTab === "proxies" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Server className="w-4 h-4" /> Nodos & Proxies ({proxies.length})
           </button>
           <button
             onClick={() => setActiveTab("products")}
@@ -175,20 +225,21 @@ export default function AdminConsole() {
               activeTab === "products" ? "border-emerald-400 text-emerald-400" : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
-            <Layers className="w-4 h-4" /> Catálogo de Servicios IA ({platforms.length})
+            <Layers className="w-4 h-4" /> Catálogo de Servicios ({platforms.length})
           </button>
         </div>
 
-        {/* TABLA 1: Clientes y Suscripciones */}
+        {/* PESTAÑA 1: Clientes */}
         {activeTab === "clients" && (
           <div className="bg-[#0B101D] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-[#0F172A] border-b border-white/10 text-slate-400 uppercase text-xs tracking-wider">
                   <tr>
-                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Cliente (Nombre Real)</th>
                     <th className="p-4">Contraseña</th>
-                    <th className="p-4">Servicio</th>
+                    <th className="p-4">Servicio Asignado</th>
+                    <th className="p-4">Nodo / Proxy</th>
                     <th className="p-4">Días Restantes</th>
                     <th className="p-4">Estado</th>
                     <th className="p-4 text-right">Acciones</th>
@@ -197,8 +248,8 @@ export default function AdminConsole() {
                 <tbody className="divide-y divide-white/5">
                   {subscriptions.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-slate-500">
-                        No hay clientes registrados en Supabase. Crea el primero arriba.
+                      <td colSpan={7} className="p-8 text-center text-slate-500">
+                        No hay clientes registrados en Supabase.
                       </td>
                     </tr>
                   ) : (
@@ -214,9 +265,18 @@ export default function AdminConsole() {
                           </code>
                         </td>
                         <td className="p-4">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-white/10">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-950/60 border border-cyan-500/30 text-cyan-300">
                             {sub.platforms?.name || "Sin Asignar"}
                           </span>
+                        </td>
+                        <td className="p-4">
+                          {sub.proxies ? (
+                            <span className="text-xs text-slate-300 font-mono bg-slate-900 px-2 py-1 rounded border border-white/5">
+                              {sub.proxies.name} ({sub.proxies.host}:{sub.proxies.port})
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-500">Sin Proxy</span>
+                          )}
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
@@ -258,11 +318,60 @@ export default function AdminConsole() {
           </div>
         )}
 
-        {/* TABLA 2: Catálogo de Servicios */}
+        {/* PESTAÑA 2: Proxies & Disponibilidad */}
+        {activeTab === "proxies" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {proxies.map((prx) => (
+              <div key={prx.id} className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 relative">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                      prx.is_full ? "bg-rose-500/10 text-rose-400 border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    }`}>
+                      {prx.is_full ? "Nodo Lleno" : "Disponible"}
+                    </span>
+                    <h3 className="text-lg font-bold text-white mt-2">{prx.name}</h3>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(prx.id, "proxy")}
+                    className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="bg-slate-950/70 p-3 rounded-xl border border-white/5 space-y-1 mb-4 font-mono text-xs text-slate-300">
+                  <div>IP/Host: <span className="text-cyan-400">{prx.host}</span></div>
+                  <div>Puerto: <span className="text-cyan-400">{prx.port}</span></div>
+                  {prx.username && <div>Usuario: <span className="text-slate-400">{prx.username}</span></div>}
+                </div>
+
+                {/* Barra de Cupos */}
+                <div className="space-y-1.5 border-t border-white/5 pt-3">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Cupos Ocupados:</span>
+                    <span className="font-bold text-white">{prx.used_slots} / {prx.max_users} usuarios</span>
+                  </div>
+                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${prx.is_full ? "bg-rose-500" : "bg-cyan-400"}`}
+                      style={{ width: `${Math.min(100, (prx.used_slots / prx.max_users) * 100)}%` }}
+                    />
+                  </div>
+                  <div className="text-right text-[11px] text-emerald-400 font-semibold">
+                    {prx.available_slots} espacios libres
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* PESTAÑA 3: Catálogo de Servicios */}
         {activeTab === "products" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {platforms.map((p) => (
-              <div key={p.id} className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 relative group">
+              <div key={p.id} className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 relative">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-400 border border-cyan-500/20">
@@ -273,19 +382,11 @@ export default function AdminConsole() {
                   <button
                     onClick={() => handleDelete(p.id, "platform")}
                     className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all"
-                    title="Eliminar Producto"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-sm text-slate-400 mb-4 line-clamp-2">{p.description}</p>
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {p.tags?.map((t: string, i: number) => (
-                    <span key={i} className="text-[11px] bg-slate-900 border border-white/5 text-slate-400 px-2 py-0.5 rounded-md">
-                      {t}
-                    </span>
-                  ))}
-                </div>
                 <div className="text-xs text-slate-500 border-t border-white/5 pt-3 flex justify-between items-center">
                   <span>URL Destino:</span>
                   <a href={p.access_url} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1">
@@ -299,16 +400,16 @@ export default function AdminConsole() {
 
       </div>
 
-      {/* MODAL: Nuevo Cliente */}
+      {/* MODAL: Nuevo Cliente (Con Selector de Proxy y Cupos) */}
       {showClientModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#0D1322] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-white mb-1">Generar Nuevo Acceso</h2>
-            <p className="text-xs text-slate-400 mb-6">Crea las credenciales que se entregarán al comprador.</p>
+            <h2 className="text-xl font-bold text-white mb-1">Generar Acceso para Cliente</h2>
+            <p className="text-xs text-slate-400 mb-6">Asigna el nombre real, servicio y el nodo proxy con cupo disponible.</p>
 
             <form onSubmit={handleCreateClient} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Nombre Completo</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Nombre Completo del Cliente</label>
                 <input
                   type="text"
                   required
@@ -320,7 +421,7 @@ export default function AdminConsole() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Correo de Acceso</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Correo Electrónico</label>
                 <input
                   type="email"
                   required
@@ -351,15 +452,36 @@ export default function AdminConsole() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Servicio / Plataforma</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Plataforma / Servicio de IA</label>
                 <select
+                  required
                   value={clientForm.platform_id}
                   onChange={(e) => setClientForm({ ...clientForm, platform_id: e.target.value })}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
                 >
-                  <option value="">Selecciona un servicio...</option>
+                  <option value="">Selecciona el servicio (ChatGPT, Claude, etc.)...</option>
                   {platforms.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Seleccionar Nodo / Proxy</label>
+                <select
+                  value={clientForm.proxy_id}
+                  onChange={(e) => setClientForm({ ...clientForm, proxy_id: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                >
+                  <option value="">Sin proxy asignado (Directo)</option>
+                  {proxies.map((prx) => (
+                    <option 
+                      key={prx.id} 
+                      value={prx.id}
+                      disabled={prx.is_full}
+                    >
+                      {prx.name} ({prx.available_slots} cupos disponibles de {prx.max_users}) {prx.is_full ? "[LLENO]" : ""}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -394,7 +516,108 @@ export default function AdminConsole() {
                   type="submit"
                   className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.3)]"
                 >
-                  Crear en Supabase
+                  Generar Acceso
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Nuevo Proxy */}
+      {showProxyModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0D1322] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-1">Añadir Nuevo Servidor Proxy</h2>
+            <p className="text-xs text-slate-400 mb-6">Configura la IP de enrutamiento y el límite de usuarios por cuenta.</p>
+
+            <form onSubmit={handleCreateProxy} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Identificador del Nodo</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Proxy Residencial USA #3"
+                  value={proxyForm.name}
+                  onChange={(e) => setProxyForm({ ...proxyForm, name: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Host / IP</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="198.51.100.112"
+                    value={proxyForm.host}
+                    onChange={(e) => setProxyForm({ ...proxyForm, host: e.target.value })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Puerto</label>
+                  <input
+                    type="number"
+                    required
+                    value={proxyForm.port}
+                    onChange={(e) => setProxyForm({ ...proxyForm, port: Number(e.target.value) })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Usuario Proxy</label>
+                  <input
+                    type="text"
+                    placeholder="Opcional"
+                    value={proxyForm.username}
+                    onChange={(e) => setProxyForm({ ...proxyForm, username: e.target.value })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-300 block mb-1">Contraseña</label>
+                  <input
+                    type="password"
+                    placeholder="Opcional"
+                    value={proxyForm.password}
+                    onChange={(e) => setProxyForm({ ...proxyForm, password: e.target.value })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Límite Máximo de Usuarios</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  required
+                  value={proxyForm.max_users}
+                  onChange={(e) => setProxyForm({ ...proxyForm, max_users: Number(e.target.value) })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                />
+                <span className="text-[11px] text-slate-500 mt-1 block">Recomendado: 3 a 5 usuarios para evitar bloqueos simultáneos.</span>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowProxyModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-slate-400 hover:text-white text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                >
+                  Guardar Proxy
                 </button>
               </div>
             </form>
@@ -406,8 +629,8 @@ export default function AdminConsole() {
       {showProductModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#0D1322] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
-            <h2 className="text-xl font-bold text-white mb-1">Añadir Nuevo Servicio a la Vitrina</h2>
-            <p className="text-xs text-slate-400 mb-6">Aparecerá automáticamente en la página principal.</p>
+            <h2 className="text-xl font-bold text-white mb-1">Añadir Nuevo Servicio</h2>
+            <p className="text-xs text-slate-400 mb-6">Aparecerá en la vitrina pública y en el selector de clientes.</p>
 
             <form onSubmit={handleCreateProduct} className="space-y-4">
               <div>
@@ -415,7 +638,7 @@ export default function AdminConsole() {
                 <input
                   type="text"
                   required
-                  placeholder="Ej. Runway Gen-3 / Midjourney"
+                  placeholder="Ej. ChatGPT Pro / Claude 3.5"
                   value={productForm.name}
                   onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none"
@@ -434,25 +657,13 @@ export default function AdminConsole() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Descripción de la Tarjeta</label>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Descripción</label>
                 <textarea
                   required
                   rows={2}
-                  placeholder="Generación de video y efectos visuales de alta gama..."
                   value={productForm.description}
                   onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                   className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-300 block mb-1">Etiquetas (separadas por coma)</label>
-                <input
-                  type="text"
-                  placeholder="Video, 4K, Cinematográfico"
-                  value={productForm.tags}
-                  onChange={(e) => setProductForm({ ...productForm, tags: e.target.value })}
-                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none"
                 />
               </div>
 
@@ -477,7 +688,7 @@ export default function AdminConsole() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm"
                 >
                   Guardar Servicio
                 </button>
