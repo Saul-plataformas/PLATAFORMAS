@@ -1,15 +1,221 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { ArrowRight, CheckCircle2, Clipboard, Download, LockKeyhole, LogIn, ShieldCheck, UserRound, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { useState } from "react";
+import Link from "next/link";
+import { ShieldCheck, Download, ExternalLink, Key, User, CheckCircle2, Lock } from "lucide-react";
 
-export default function Portal() {
-  const [loggedIn, setLoggedIn] = useState(false)
-  const [copied, setCopied] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const copy = () => { navigator.clipboard?.writeText('gemini.access@nexusgate.io'); setCopied(true); window.setTimeout(() => setCopied(false), 1600) }
-  if (!loggedIn) return <main className="flex min-h-screen items-center justify-center bg-[#080D16] px-5 text-white"><div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,210,255,.12),transparent_40%)]" /><div className="relative w-full max-w-md"><Link href="/" className="mx-auto mb-10 flex w-fit items-center gap-3"><div className="flex size-10 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-400/10"><Zap className="text-cyan-300" /></div><span className="text-xs font-bold tracking-[.24em] text-cyan-300">NEXUSGATE // CORE</span></Link><div className="rounded-2xl border border-white/10 bg-[#111B2A]/90 p-7 shadow-2xl shadow-black/30 sm:p-9"><div className="mb-7"><div className="mb-4 flex size-11 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300"><LockKeyhole size={20} /></div><h1 className="text-2xl font-semibold">Portal de suscriptor</h1><p className="mt-2 text-sm leading-6 text-slate-400">Ingresa con las credenciales asignadas por tu administrador.</p></div><form onSubmit={(e) => { e.preventDefault(); setLoggedIn(true) }} className="flex flex-col gap-4"><label className="flex flex-col gap-2 text-xs font-semibold text-slate-300">Usuario / correo electrónico<input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-sm outline-none focus:border-cyan-400/60" placeholder="tu@empresa.com" /></label><label className="flex flex-col gap-2 text-xs font-semibold text-slate-300">Contraseña de acceso<input required type="password" value={password} onChange={e => setPassword(e.target.value)} className="h-12 rounded-xl border border-white/10 bg-black/20 px-4 text-sm outline-none focus:border-cyan-400/60" placeholder="••••••••" /></label><button className="mt-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-sm font-bold text-slate-950 transition hover:brightness-110">Ingresar al portal <LogIn size={16} /></button></form><p className="mt-6 text-center text-[11px] leading-5 text-slate-500">Los accesos son asignados y administrados exclusivamente por el titular de la plataforma.</p></div><Link href="/" className="mt-6 block text-center text-xs text-slate-500 hover:text-cyan-300">Volver a NexusGate</Link></div></main>
-  return <main className="min-h-screen bg-[#080D16] px-5 py-6 text-white sm:px-8"><div className="mx-auto max-w-5xl"><header className="flex items-center justify-between border-b border-white/10 pb-5"><Link href="/" className="flex items-center gap-3"><div className="flex size-9 items-center justify-center rounded-lg bg-cyan-400/10 text-cyan-300"><Zap /></div><span className="text-xs font-bold tracking-[.2em] text-cyan-300">NEXUSGATE</span></Link><span className="flex items-center gap-2 text-xs text-emerald-300"><span className="size-1.5 rounded-full bg-emerald-400" /> Sesión segura</span></header><section className="py-10"><p className="text-xs font-bold uppercase tracking-[.18em] text-cyan-300">Cockpit de licencia</p><div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><h1 className="text-3xl font-semibold">Hola, {email.split('@')[0] || 'suscriptor'}</h1><p className="mt-2 text-sm text-slate-400">Aquí tienes todo lo necesario para activar tu acceso.</p></div><span className="w-fit rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-xs font-bold text-cyan-300">Gemini Ultra</span></div></section><div className="grid gap-5 lg:grid-cols-3"><section className="rounded-2xl border border-white/10 bg-[#111B2A] p-6 lg:col-span-2"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-slate-500">Balance de suscripción</p><h2 className="mt-3 text-3xl font-semibold">30 <span className="text-lg text-slate-500">/ 30 días restantes</span></h2></div><div className="flex size-12 items-center justify-center rounded-full border-4 border-emerald-400/30 text-emerald-300"><CheckCircle2 /></div></div><div className="mt-6 h-2 rounded-full bg-white/10"><div className="h-full w-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" /></div><p className="mt-3 text-xs text-slate-500">Renovación automática administrada por NexusGate.</p></section><section className="rounded-2xl border border-emerald-400/20 bg-emerald-400/[.06] p-6"><p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-300">Estado de acceso</p><div className="mt-4 flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300"><ShieldCheck /></div><div><p className="font-semibold">Activo y verificado</p><p className="mt-1 text-xs text-slate-400">Última revisión: hoy</p></div></div></section><section className="rounded-2xl border border-white/10 bg-[#111B2A] p-6 lg:col-span-2"><div className="flex items-start justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-slate-500">Cuenta asignada</p><h2 className="mt-2 text-lg font-semibold">Credenciales de Gemini Ultra</h2></div><UserRound className="text-slate-500" size={19} /></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-white/10 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-wider text-slate-500">Correo</p><p className="mt-2 font-mono text-sm text-slate-200">gemini.access@nexusgate.io</p></div><div className="rounded-xl border border-white/10 bg-black/20 p-4"><p className="text-[10px] uppercase tracking-wider text-slate-500">Contraseña temporal</p><p className="mt-2 font-mono text-sm text-slate-200">••••••••••••</p></div></div><button onClick={copy} className="mt-4 flex items-center gap-2 text-xs font-bold text-cyan-300 hover:text-cyan-200"><Clipboard size={15} /> {copied ? 'Correo copiado' : 'Copiar correo asignado'}</button></section><section className="rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[.1] to-blue-500/[.05] p-6 lg:col-span-3"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center"><div><div className="flex items-center gap-2 text-cyan-300"><Download size={18} /><p className="text-sm font-bold">Extensión de navegador</p></div><h2 className="mt-2 text-xl font-semibold">Instalador automático</h2><p className="mt-2 max-w-xl text-sm text-slate-400">Descarga el paquete .zip con instalador en un clic para activar tu acceso de forma segura.</p></div><div className="flex flex-col gap-3 sm:items-end"><button className="flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-300"><Download size={16} /> Descargar extensión (.zip)</button><button className="flex items-center justify-center gap-2 text-xs font-bold text-cyan-300">Conectar y acceder a la plataforma <ArrowRight size={15} /></button></div></div></section></div></div></main>
+export default function SubscriberPortal() {
+  const [session, setSession] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/v1/licenses/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        throw new Error(data.error || "Credenciales inválidas");
+      }
+
+      setSession(data);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 1. Pantalla de Inicio de Sesión si no está autenticado
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-[#07090E] text-slate-100 flex flex-col justify-center items-center p-4 font-sans">
+        <div className="w-full max-w-md bg-[#0D1322] border border-white/10 rounded-2xl p-8 shadow-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 mb-2 border border-cyan-500/20">
+              <Lock className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-extrabold text-white">Cockpit de Licencia</h1>
+            <p className="text-xs text-slate-400">Ingresa tus credenciales para acceder a tus herramientas autorizadas.</p>
+          </div>
+
+          {errorMsg && (
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+              {errorMsg}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Correo de Acceso</label>
+              <input
+                type="email"
+                required
+                placeholder="cliente@correo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">Contraseña</label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:border-cyan-400 outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] text-sm disabled:opacity-50"
+            >
+              {loading ? "Verificando..." : "Ingresar a mi Cockpit ➔"}
+            </button>
+          </form>
+
+          <div className="text-center pt-2">
+            <Link href="/" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+              ← Volver al sitio principal
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Cockpit Dinámico del Cliente
+  const daysTotal = 30;
+  const daysRemaining = session.suscripcion?.days_remaining || 0;
+  const progressPercent = Math.min(100, Math.round((daysRemaining / daysTotal) * 100));
+
+  return (
+    <div className="min-h-screen bg-[#07090E] text-slate-100 p-6 md:p-12 font-sans selection:bg-cyan-500 selection:text-black">
+      <div className="max-w-4xl mx-auto space-y-8">
+        
+        {/* Barra Superior */}
+        <div className="flex justify-between items-center border-b border-white/10 pb-6">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="font-extrabold tracking-wider text-sm">NEXUSGATE // CORE</span>
+          </div>
+          <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Sesión segura activa
+          </span>
+        </div>
+
+        {/* Saludo con NOMBRE REAL y BADGE DINÁMICO */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span className="text-cyan-400 text-xs font-bold uppercase tracking-wider">Cockpit de Licencia</span>
+            {/* Aquí imprime el nombre real del cliente */}
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mt-1">
+              Hola, {session.usuario?.full_name || session.usuario?.email}
+            </h1>
+            <p className="text-sm text-slate-400 mt-1">Aquí tienes todo lo necesario para activar y utilizar tu acceso corporativo.</p>
+          </div>
+
+          {/* Insignia dinámica con el servicio real asignado */}
+          <span className="inline-flex items-center px-4 py-1.5 rounded-xl text-sm font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+            {session.suscripcion?.plan || "Servicio Autorizado"}
+          </span>
+        </div>
+
+        {/* Tarjetas de Métricas de Días */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 bg-[#0B101D] border border-white/10 rounded-2xl p-6 space-y-4">
+            <div className="flex justify-between items-start">
+              <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Balance de Suscripción</span>
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            </div>
+            
+            <div className="text-3xl font-extrabold text-white">
+              {daysRemaining} <span className="text-slate-500 text-lg font-normal">/ {daysTotal} días restantes</span>
+            </div>
+
+            <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-white/5">
+              <div 
+                className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full transition-all duration-500" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="text-xs text-slate-500">Renovación y enrutamiento administrados automáticamente.</p>
+          </div>
+
+          <div className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+            <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Estado de Acceso</span>
+            <div>
+              <div className="text-emerald-400 font-bold flex items-center gap-1.5 text-lg">
+                <ShieldCheck className="w-5 h-5" /> Activo y Verificado
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Conectividad directa sin restricciones.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tarjeta de Credenciales */}
+        <div className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center gap-2 text-white font-bold text-sm">
+            <User className="w-4 h-4 text-cyan-400" /> Credenciales Asignadas para {session.suscripcion?.plan}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-950 p-4 rounded-xl border border-white/5">
+              <span className="text-[11px] text-slate-500 block uppercase mb-1">Correo de Usuario</span>
+              <code className="text-sm text-cyan-300 font-mono">{email}</code>
+            </div>
+            <div className="bg-slate-950 p-4 rounded-xl border border-white/5">
+              <span className="text-[11px] text-slate-500 block uppercase mb-1">Contraseña Activa</span>
+              <code className="text-sm text-slate-300 font-mono">••••••••••••</code>
+            </div>
+          </div>
+        </div>
+
+        {/* Botón de Descarga y Acceso */}
+        <div className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-white text-base">Extensión de Conexión Automática</h3>
+            <p className="text-xs text-slate-400">Descarga el paquete .zip de la extensión para iniciar sesión en 1 clic.</p>
+          </div>
+
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <a
+              href="/extension.zip"
+              download
+              className="flex-1 md:flex-initial bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+            >
+              <Download className="w-4 h-4" /> Descargar extensión (.zip)
+            </a>
+            {session.access_url && (
+              <a
+                href={session.access_url}
+                target="_blank"
+                rel="noreferrer"
+                className="p-2.5 rounded-xl bg-slate-900 border border-white/10 hover:text-cyan-400 transition-colors"
+                title="Ir a la plataforma oficial"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
 }
