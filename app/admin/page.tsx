@@ -1,78 +1,492 @@
-'use client'
+"use client";
 
-import { useMemo, useState } from 'react'
-import { AlertTriangle, CalendarDays, Check, ChevronDown, CircleHelp, Copy, Globe2, KeyRound, LockKeyhole, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, UserRound, Users, X, Zap } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { 
+  Users, Layers, Plus, Trash2, Key, RefreshCw, 
+  ExternalLink, Calendar, CheckCircle2, AlertTriangle, ShieldCheck 
+} from "lucide-react";
 
-type Status = 'Activo' | 'Por vencer' | 'Expirado'
-type Client = { id: number; name: string; email: string; platform: string; platformColor: string; days: number; node: string; region: string; status: Status }
+export default function AdminConsole() {
+  const [activeTab, setActiveTab] = useState<"clients" | "products">("clients");
+  const [loading, setLoading] = useState(true);
+  const [platforms, setPlatforms] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
-const initialClients: Client[] = [
-  { id: 1, name: 'Sofía Martínez', email: 'sofia@northstar.studio', platform: 'ChatGPT Plus', platformColor: '#10B981', days: 28, node: '198.51.100.24:8080', region: 'US-RES', status: 'Activo' },
-  { id: 2, name: 'Alex Rivera', email: 'alex@brightlabs.io', platform: 'Semrush Guru', platformColor: '#F59E0B', days: 2, node: '203.0.113.18:3128', region: 'US-RES', status: 'Por vencer' },
-  { id: 3, name: 'Mariana López', email: 'mariana@studioforma.co', platform: 'Canva Pro', platformColor: '#EC4899', days: 30, node: '198.51.100.87:8080', region: 'MX-RES', status: 'Activo' },
-  { id: 4, name: 'Diego Santos', email: 'diego@orbitmedia.mx', platform: 'ChatGPT Plus', platformColor: '#10B981', days: 0, node: '203.0.113.44:8080', region: 'MX-RES', status: 'Expirado' },
-  { id: 5, name: 'Camila Torres', email: 'camila@pixelhouse.agency', platform: 'Notion AI', platformColor: '#CBD5E1', days: 12, node: '198.51.100.61:3128', region: 'US-RES', status: 'Activo' },
-  { id: 6, name: 'Nicolás Gómez', email: 'nicolas@monocrome.dev', platform: 'Perplexity Pro', platformColor: '#0EA5E9', days: 64, node: '198.51.100.90:8080', region: 'EU-RES', status: 'Activo' },
-]
+  // Modales
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
 
-const platformColors: Record<string, string> = { ChatGPT: '#10B981', Semrush: '#F59E0B', Canva: '#EC4899', Notion: '#CBD5E1', Perplexity: '#0EA5E9' }
+  // Formulario Nuevo Cliente
+  const [clientForm, setClientForm] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    platform_id: "",
+    days: 30
+  });
 
-function StatusBadge({ status }: { status: Status }) {
-  const styles = status === 'Activo' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : status === 'Por vencer' ? 'border-amber-400/20 bg-amber-400/10 text-amber-300' : 'border-red-400/20 bg-red-400/10 text-red-300'
-  return <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${styles}`}><span className="size-1.5 rounded-full bg-current" />{status}</span>
-}
+  // Formulario Nuevo Producto
+  const [productForm, setProductForm] = useState({
+    name: "",
+    badge: "Activo • Entrega Inmediata",
+    description: "",
+    tags: "IA, Productividad",
+    accent_color: "cyan",
+    access_url: "https://chatgpt.com"
+  });
 
-function PlatformBadge({ platform, color }: { platform: string; color: string }) {
-  return <span className="inline-flex items-center gap-2 text-sm text-slate-200"><span className="flex size-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[10px] font-bold" style={{ color }}>{platform.slice(0, 2).toUpperCase()}</span>{platform}</span>
-}
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/v1/licenses/manage");
+      const data = await res.json();
+      if (data.platforms) setPlatforms(data.platforms);
+      if (data.subscriptions) setSubscriptions(data.subscriptions);
+    } catch (err) {
+      console.error("Error al cargar datos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-function Kpi({ icon, label, value, detail, tone }: { icon: React.ReactNode; label: string; value: number; detail: string; tone: 'green' | 'amber' | 'red' | 'blue' }) {
-  const color = tone === 'green' ? 'text-emerald-300 bg-emerald-400/10 border-emerald-400/20' : tone === 'amber' ? 'text-amber-300 bg-amber-400/10 border-amber-400/20' : tone === 'red' ? 'text-red-300 bg-red-400/10 border-red-400/20' : 'text-sky-300 bg-sky-400/10 border-sky-400/20'
-  return <div className="rounded-xl border border-white/10 bg-[#12161F] p-4 transition hover:border-white/20 sm:p-5"><div className="flex items-start justify-between"><div className={`flex size-9 items-center justify-center rounded-lg border ${color}`}>{icon}</div>{tone === 'green' && <span className="mt-1 size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#10B981]" />}</div><div className="mt-5 text-2xl font-semibold tracking-tight text-white">{value}</div><div className="mt-1 text-xs font-medium text-slate-300">{label}</div><div className="mt-1 text-[11px] text-slate-500">{detail}</div></div>
-}
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-export default function Page() {
-  const [clients, setClients] = useState(initialClients)
-  const [query, setQuery] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [drawerClient, setDrawerClient] = useState<Client | null>(null)
-  const [copied, setCopied] = useState<number | null>(null)
-  const [mobileNav, setMobileNav] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newEmail, setNewEmail] = useState('')
-  const [newPlatform, setNewPlatform] = useState('ChatGPT')
-  const [newDays, setNewDays] = useState('30')
-  const [newNode, setNewNode] = useState('198.51.100.112:8080')
+  const handleGeneratePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let pass = "";
+    for (let i = 0; i < 8; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    setClientForm({ ...clientForm, password: pass });
+  };
 
-  const filtered = useMemo(() => clients.filter((client) => `${client.name} ${client.email} ${client.platform} ${client.node}`.toLowerCase().includes(query.toLowerCase())), [clients, query])
-  const active = clients.filter((c) => c.status === 'Activo').length
-  const expiring = clients.filter((c) => c.status === 'Por vencer').length
-  const expired = clients.filter((c) => c.status === 'Expirado').length
-  const platforms = new Set(clients.map((c) => c.platform)).size
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/v1/licenses/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clientForm)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-  function renew(id: number) { setClients((current) => current.map((client) => client.id === id ? { ...client, days: client.days + 30, status: 'Activo' } : client)) }
-  function toggleLock(id: number) { setClients((current) => current.map((client) => client.id === id ? { ...client, status: client.status === 'Activo' ? 'Por vencer' : 'Activo' } : client)) }
-  function copyCredentials(id: number) { navigator.clipboard?.writeText(clients.find((client) => client.id === id)?.node ?? ''); setCopied(id); window.setTimeout(() => setCopied(null), 1600) }
-  function createAccess() {
-    if (!newEmail.trim() || !newName.trim()) return
-    const client: Client = { id: Date.now(), name: newName.trim(), email: newEmail.trim(), platform: `${newPlatform} ${newPlatform === 'ChatGPT' ? 'Plus' : 'Pro'}`, platformColor: platformColors[newPlatform], days: Number(newDays) || 30, node: newNode.trim() || '198.51.100.112:8080', region: 'US-RES', status: 'Activo' }
-    setClients((current) => [client, ...current]); setNewName(''); setNewEmail(''); setModalOpen(false)
-  }
+      setShowClientModal(false);
+      setClientForm({ full_name: "", email: "", password: "", platform_id: "", days: 30 });
+      fetchData();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
+  };
 
-  return <main className="min-h-screen bg-[#0A0C10] text-white selection:bg-indigo-500/30"><div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_82%_0%,rgba(99,102,241,0.11),transparent_28%),radial-gradient(circle_at_12%_45%,rgba(14,165,233,0.04),transparent_24%)]" /><div className="relative mx-auto max-w-[1500px] px-4 py-5 sm:px-6 lg:px-10">
-    <header className="flex items-center justify-between gap-4 border-b border-white/10 pb-5"><div className="flex items-center gap-3"><button aria-label="Abrir menú" className="rounded-lg p-2 text-slate-400 hover:bg-white/5 lg:hidden" onClick={() => setMobileNav(!mobileNav)}><Menu /></button><div className="relative flex size-10 items-center justify-center rounded-xl border border-indigo-400/30 bg-indigo-500/15"><div className="size-4 rotate-45 rounded-[4px] border-2 border-indigo-300 shadow-[0_0_16px_#6366F1]" /><span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-indigo-300 shadow-[0_0_12px_#6366F1]" /></div><div><div className="text-[11px] font-bold tracking-[0.24em] text-indigo-300">NEXUSGATE</div><div className="text-sm font-semibold text-slate-100">License & Subscription Manager</div></div></div><div className="hidden max-w-md flex-1 md:block"><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} /><input aria-label="Buscar" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cliente, plataforma o nodo..." className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-indigo-400/60 focus:bg-white/[0.06]" /></div></div><div className="flex items-center gap-3"><div className="hidden items-center gap-2 text-xs text-slate-500 xl:flex"><CalendarDays size={15} /> 05 OCT 2026</div><div className="hidden items-center gap-2 text-xs text-emerald-400 xl:flex"><span className="size-1.5 rounded-full bg-emerald-400" /> Sistema operativo</div><button onClick={() => setModalOpen(true)} className="hidden h-10 items-center gap-2 rounded-xl bg-indigo-500 px-4 text-xs font-bold text-white shadow-[0_0_20px_rgba(99,102,241,0.2)] transition hover:bg-indigo-400 sm:flex"><Plus size={16} /> Nuevo acceso</button><div className="flex size-9 items-center justify-center rounded-full border border-indigo-400/30 bg-indigo-500/10 text-xs font-bold text-indigo-200">NG</div></div></header>
-    {mobileNav && <div className="mt-3 flex gap-2 rounded-xl border border-white/10 bg-[#12161F] p-2 text-xs text-slate-300 lg:hidden"><button className="rounded-lg bg-indigo-500/20 px-3 py-2 text-indigo-200">Resumen</button><button className="px-3 py-2">Clientes</button><button className="px-3 py-2">Configuración</button></div>}
-    <div className="mt-6 flex items-end justify-between"><div><div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-indigo-300"><span className="size-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#6366F1]" />Vista general</div><h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Panel de control <span className="text-slate-500">/</span> Licencias</h1><p className="mt-2 text-sm text-slate-500">Monitorea accesos, suscripciones y nodos en un solo lugar.</p></div><div className="hidden items-center gap-2 text-xs text-slate-500 md:flex">Última sincronización: hace 2 min</div></div>
-    <section className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4"><Kpi icon={<Users size={18} />} label="Suscripciones activas" value={active} detail="clientes con acceso" tone="green" /><Kpi icon={<AlertTriangle size={18} />} label="Por vencer (< 3 días)" value={expiring} detail="requieren atención" tone="amber" /><Kpi icon={<AlertTriangle size={18} />} label="Licencias expiradas" value={expired} detail="accesos bloqueados" tone="red" /><Kpi icon={<Globe2 size={18} />} label="Plataformas conectadas" value={platforms} detail="servicios activos" tone="blue" /></section>
-    <section className="mt-8 overflow-hidden rounded-xl border border-white/10 bg-[#12161F]/90 shadow-2xl shadow-black/20"><div className="flex flex-col gap-4 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between"><div><h2 className="text-base font-semibold">Clientes y suscripciones</h2><p className="mt-1 text-xs text-slate-500">Gestiona accesos, periodos y nodos gateway.</p></div><button onClick={() => setModalOpen(true)} className="flex items-center gap-2 self-start rounded-lg border border-indigo-400/30 bg-indigo-500/10 px-3 py-2 text-xs font-semibold text-indigo-200 transition hover:bg-indigo-500/20"><Plus size={14} /> Añadir cliente</button></div><div className="overflow-x-auto"><table className="w-full min-w-[1080px] text-left"><thead><tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-[0.14em] text-slate-500"><th className="px-5 py-3 font-medium">Cliente / correo</th><th className="px-4 py-3 font-medium">Plataforma</th><th className="px-4 py-3 font-medium">Días restantes</th><th className="px-4 py-3 font-medium">Gateway / proxy node</th><th className="px-4 py-3 font-medium">Estado</th><th className="px-5 py-3 text-right font-medium">Acciones</th></tr></thead><tbody>{filtered.map((client) => <tr key={client.id} className="group border-b border-white/[0.045] transition hover:bg-white/[0.025]"><td className="px-5 py-4"><button onClick={() => setDrawerClient(client)} className="text-left"><div className="text-sm font-medium text-slate-100 group-hover:text-indigo-300">{client.name}</div><div className="mt-1 text-xs text-slate-500">{client.email}</div></button></td><td className="px-4 py-4"><PlatformBadge platform={client.platform} color={client.platformColor} /></td><td className="px-4 py-4"><div className={`text-sm font-semibold ${client.days === 0 ? 'text-red-400' : client.days < 3 ? 'text-amber-300' : 'text-emerald-300'}`}>{client.days} días</div><div className="mt-1 h-1 w-24 rounded-full bg-white/10"><div className={`h-full rounded-full ${client.days === 0 ? 'bg-red-400' : client.days < 3 ? 'bg-amber-300' : 'bg-emerald-400'}`} style={{ width: `${Math.min(client.days / 90 * 100, 100)}%` }} /></div></td><td className="px-4 py-4"><div className="flex items-center gap-2 font-mono text-xs text-slate-300"><Globe2 size={13} className="text-sky-400" />{client.node}</div><div className="mt-1 pl-5 text-[10px] text-slate-500">{client.region} · Nodo asignado</div></td><td className="px-4 py-4"><StatusBadge status={client.status} /></td><td className="px-5 py-4"><div className="flex items-center justify-end gap-1"><button onClick={() => renew(client.id)} className="rounded-lg px-2.5 py-2 text-[11px] font-semibold text-indigo-300 transition hover:bg-indigo-500/10">Renovar +30d</button><button aria-label="Copiar nodo" onClick={() => copyCredentials(client.id)} className="rounded-lg p-2 text-slate-500 transition hover:bg-white/10 hover:text-white">{copied === client.id ? <Check size={15} className="text-emerald-400" /> : <Copy size={15} />}</button><button aria-label="Bloquear o desbloquear sesión" onClick={() => toggleLock(client.id)} className="rounded-lg p-2 text-slate-500 transition hover:bg-white/10 hover:text-white">{client.status === 'Activo' ? <LockKeyhole size={15} /> : <KeyRound size={15} />}</button><button aria-label="Más opciones" className="rounded-lg p-2 text-slate-500 transition hover:bg-white/10 hover:text-white"><MoreHorizontal size={15} /></button></div></td></tr>)}</tbody></table></div>{filtered.length === 0 && <div className="p-12 text-center text-sm text-slate-500">No encontramos clientes con esa búsqueda.</div>}<div className="flex items-center justify-between px-5 py-4 text-xs text-slate-500"><span>Mostrando {filtered.length} de {clients.length} clientes</span><span className="hidden items-center gap-2 sm:flex"><span className="size-1.5 rounded-full bg-emerald-400" /> Datos sincronizados</span></div></section>
-    <footer className="flex flex-col gap-2 py-6 text-[11px] text-slate-500 sm:flex-row sm:justify-between"><span>NexusGate // Access & License Hub</span><span className="flex items-center gap-1"><ShieldCheck size={13} /> Conexión cifrada de extremo a extremo</span></footer>
-  </div><button aria-label="Nuevo acceso" onClick={() => setModalOpen(true)} className="fixed bottom-5 right-5 flex size-12 items-center justify-center rounded-full bg-indigo-500 text-white shadow-[0_0_25px_rgba(99,102,241,0.35)] sm:hidden"><Plus /></button>{modalOpen && <CreateModal name={newName} setName={setNewName} email={newEmail} setEmail={setNewEmail} platform={newPlatform} setPlatform={setNewPlatform} days={newDays} setDays={setNewDays} node={newNode} setNode={setNewNode} onClose={() => setModalOpen(false)} onCreate={createAccess} />}{drawerClient && <ClientDrawer client={drawerClient} onClose={() => setDrawerClient(null)} />}</main>
-}
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/v1/licenses/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "CREATE_PLATFORM",
+          ...productForm,
+          tags: productForm.tags.split(",").map(t => t.trim())
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-function CreateModal({ name, setName, email, setEmail, platform, setPlatform, days, setDays, node, setNode, onClose, onCreate }: { name: string; setName: (v: string) => void; email: string; setEmail: (v: string) => void; platform: string; setPlatform: (v: string) => void; days: string; setDays: (v: string) => void; node: string; setNode: (v: string) => void; onClose: () => void; onCreate: () => void }) {
-  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4"><div className="w-full max-w-lg rounded-t-3xl border border-white/10 bg-[#12161F] shadow-2xl sm:rounded-2xl"><div className="flex items-start justify-between border-b border-white/10 p-6"><div><div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-300"><Sparkles size={13} /> Nuevo acceso</div><h2 className="text-xl font-semibold">Generar acceso</h2><p className="mt-1 text-xs text-slate-500">Configura la suscripción y el nodo del cliente.</p></div><button aria-label="Cerrar" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-white/5 hover:text-white"><X size={18} /></button></div><div className="flex flex-col gap-4 p-6"><label className="flex flex-col gap-2 text-xs font-medium text-slate-300">Nombre completo<input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del cliente" className="h-11 rounded-xl border border-white/10 bg-black/10 px-3 text-sm text-white outline-none focus:border-indigo-400/60" /></label><label className="flex flex-col gap-2 text-xs font-medium text-slate-300">Correo de acceso<input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="cliente@empresa.com" className="h-11 rounded-xl border border-white/10 bg-black/10 px-3 text-sm text-white outline-none focus:border-indigo-400/60" /></label><label className="flex flex-col gap-2 text-xs font-medium text-slate-300">Plataforma<select value={platform} onChange={(e) => setPlatform(e.target.value)} className="h-11 rounded-xl border border-white/10 bg-[#0A0C10] px-3 text-sm text-white outline-none focus:border-indigo-400/60"><option>ChatGPT</option><option>Semrush</option><option>Canva</option><option>Notion</option><option>Perplexity</option></select></label><div className="flex flex-col gap-2"><span className="text-xs font-medium text-slate-300">Asignación de días</span><div className="grid grid-cols-4 gap-2">{['15', '30', '60', 'custom'].map((value) => <button key={value} onClick={() => setDays(value === 'custom' ? '' : value)} className={`rounded-xl border py-3 text-xs font-semibold transition ${days === value || (value === 'custom' && !['15', '30', '60'].includes(days)) ? 'border-indigo-400/50 bg-indigo-500/15 text-indigo-200' : 'border-white/10 text-slate-400 hover:bg-white/5'}`}>{value === 'custom' ? 'Personalizado' : `${value} días`}</button>)}</div>{!['15', '30', '60'].includes(days) && <input value={days} onChange={(e) => setDays(e.target.value)} placeholder="Días personalizados" type="number" className="h-10 rounded-xl border border-white/10 bg-black/10 px-3 text-sm text-white outline-none focus:border-indigo-400/60" />}</div><label className="flex flex-col gap-2 text-xs font-medium text-slate-300">Gateway / Proxy IP<input value={node} onChange={(e) => setNode(e.target.value)} className="h-11 rounded-xl border border-white/10 bg-black/10 px-3 font-mono text-sm text-white outline-none focus:border-indigo-400/60" /></label><div className="flex justify-end gap-2 border-t border-white/10 pt-5"><button onClick={onClose} className="rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-400 hover:bg-white/5">Cancelar</button><button onClick={onCreate} className="rounded-xl bg-indigo-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-indigo-400">Generar acceso</button></div></div></div></div>
-}
+      setShowProductModal(false);
+      setProductForm({ name: "", badge: "Activo • Entrega Inmediata", description: "", tags: "IA, Productividad", accent_color: "cyan", access_url: "https://chatgpt.com" });
+      fetchData();
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    }
+  };
 
-function ClientDrawer({ client, onClose }: { client: Client; onClose: () => void }) {
-  return <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"><aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-white/10 bg-[#0F131A] shadow-2xl"><div className="flex items-center justify-between border-b border-white/10 p-5"><div><div className="text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-300">Vista del cliente</div><h2 className="mt-1 text-lg font-semibold">Detalle de acceso</h2></div><button aria-label="Cerrar" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-white/5 hover:text-white"><X size={18} /></button></div><div className="flex-1 p-5"><div className="rounded-xl border border-white/10 bg-[#12161F] p-5"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-300"><UserRound size={18} /></div><div><div className="text-sm font-semibold">{client.name}</div><div className="mt-0.5 text-xs text-slate-500">{client.email}</div></div></div><StatusBadge status={client.status} /></div><div className="my-5 h-px bg-white/10" /><div className="flex items-center justify-between"><PlatformBadge platform={client.platform} color={client.platformColor} /><span className="text-xs font-semibold text-slate-300">{client.days} días restantes</span></div><div className="mt-5 rounded-xl border border-sky-400/15 bg-sky-400/[0.04] p-4"><div className="flex items-center gap-2 text-xs text-slate-400"><Globe2 size={14} className="text-sky-400" />Gateway asignado</div><div className="mt-2 font-mono text-sm text-slate-200">{client.node}</div><div className="mt-1 text-[10px] text-slate-500">{client.region}</div></div></div><div className="mt-4 rounded-xl border border-white/10 bg-[#12161F] p-4 text-xs text-slate-400"><div className="flex items-center gap-2"><CircleHelp size={14} className="text-indigo-300" />Última actividad registrada</div><p className="mt-2 text-slate-500">Acceso verificado y sesión protegida.</p></div></div></aside></div>
+  const handleDelete = async (id: string, type: "subscription" | "platform") => {
+    if (!confirm(`¿Eliminar este ${type === "platform" ? "producto" : "acceso"} de forma permanente?`)) return;
+    try {
+      const res = await fetch(`/api/v1/licenses/manage?type=${type}&id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("No se pudo eliminar");
+      fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleAddDays = async (id: string, currentDays: number, delta: number) => {
+    const newDays = Math.max(0, currentDays + delta);
+    try {
+      await fetch("/api/v1/licenses/manage", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, days_remaining: newDays, status: newDays > 0 ? "active" : "expired" })
+      });
+      fetchData();
+    } catch (err: any) {
+      alert("Error al actualizar días");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#07090E] text-slate-100 p-6 md:p-10 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Cabecera Principal */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+          <div>
+            <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-1">
+              <ShieldCheck className="w-4 h-4" /> NexusGate Admin Engine
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Centro de Control de Licencias</h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setShowClientModal(true); handleGeneratePassword(); }}
+              className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+            >
+              <Plus className="w-4 h-4" /> Nuevo Acceso Cliente
+            </button>
+            <button
+              onClick={() => setShowProductModal(true)}
+              className="bg-slate-800 hover:bg-slate-700 border border-white/10 px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all"
+            >
+              <Plus className="w-4 h-4 text-emerald-400" /> Añadir Servicio
+            </button>
+            <button onClick={fetchData} className="p-2.5 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20">
+              <RefreshCw className={`w-4 h-4 text-slate-400 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Selector de Pestañas */}
+        <div className="flex gap-2 border-b border-white/5">
+          <button
+            onClick={() => setActiveTab("clients")}
+            className={`pb-3 px-4 font-medium text-sm flex items-center gap-2 border-b-2 transition-all ${
+              activeTab === "clients" ? "border-cyan-400 text-cyan-400" : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Users className="w-4 h-4" /> Clientes & Suscripciones ({subscriptions.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("products")}
+            className={`pb-3 px-4 font-medium text-sm flex items-center gap-2 border-b-2 transition-all ${
+              activeTab === "products" ? "border-emerald-400 text-emerald-400" : "border-transparent text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Layers className="w-4 h-4" /> Catálogo de Servicios IA ({platforms.length})
+          </button>
+        </div>
+
+        {/* TABLA 1: Clientes y Suscripciones */}
+        {activeTab === "clients" && (
+          <div className="bg-[#0B101D] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#0F172A] border-b border-white/10 text-slate-400 uppercase text-xs tracking-wider">
+                  <tr>
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Contraseña</th>
+                    <th className="p-4">Servicio</th>
+                    <th className="p-4">Días Restantes</th>
+                    <th className="p-4">Estado</th>
+                    <th className="p-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {subscriptions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-slate-500">
+                        No hay clientes registrados en Supabase. Crea el primero arriba.
+                      </td>
+                    </tr>
+                  ) : (
+                    subscriptions.map((sub) => (
+                      <tr key={sub.id} className="hover:bg-slate-900/40 transition-colors">
+                        <td className="p-4">
+                          <div className="font-semibold text-white">{sub.clients?.full_name}</div>
+                          <div className="text-xs text-slate-400">{sub.clients?.email}</div>
+                        </td>
+                        <td className="p-4">
+                          <code className="bg-slate-800 px-2 py-1 rounded text-cyan-300 font-mono text-xs">
+                            {sub.clients?.password_hash}
+                          </code>
+                        </td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-white/10">
+                            {sub.platforms?.name || "Sin Asignar"}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-bold ${sub.days_remaining > 5 ? "text-emerald-400" : "text-amber-400"}`}>
+                              {sub.days_remaining} días
+                            </span>
+                            <div className="flex gap-1">
+                              <button onClick={() => handleAddDays(sub.id, sub.days_remaining, 15)} className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-[10px] rounded text-slate-300">+15</button>
+                              <button onClick={() => handleAddDays(sub.id, sub.days_remaining, 30)} className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-[10px] rounded text-slate-300">+30</button>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          {sub.status === "active" && sub.days_remaining > 0 ? (
+                            <span className="text-xs text-emerald-400 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Activo
+                            </span>
+                          ) : (
+                            <span className="text-xs text-rose-400 flex items-center gap-1">
+                              <AlertTriangle className="w-3.5 h-3.5" /> Expirado
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => handleDelete(sub.id, "subscription")}
+                            className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+                            title="Eliminar Acceso"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TABLA 2: Catálogo de Servicios */}
+        {activeTab === "products" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {platforms.map((p) => (
+              <div key={p.id} className="bg-[#0B101D] border border-white/10 rounded-2xl p-6 relative group">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-cyan-400 border border-cyan-500/20">
+                      {p.badge}
+                    </span>
+                    <h3 className="text-xl font-bold text-white mt-2">{p.name}</h3>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(p.id, "platform")}
+                    className="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all"
+                    title="Eliminar Producto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-sm text-slate-400 mb-4 line-clamp-2">{p.description}</p>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {p.tags?.map((t: string, i: number) => (
+                    <span key={i} className="text-[11px] bg-slate-900 border border-white/5 text-slate-400 px-2 py-0.5 rounded-md">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-xs text-slate-500 border-t border-white/5 pt-3 flex justify-between items-center">
+                  <span>URL Destino:</span>
+                  <a href={p.access_url} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1">
+                    {p.access_url.replace("https://", "")} <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+
+      {/* MODAL: Nuevo Cliente */}
+      {showClientModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0D1322] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-1">Generar Nuevo Acceso</h2>
+            <p className="text-xs text-slate-400 mb-6">Crea las credenciales que se entregarán al comprador.</p>
+
+            <form onSubmit={handleCreateClient} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Nombre Completo</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Juan Pérez"
+                  value={clientForm.full_name}
+                  onChange={(e) => setClientForm({ ...clientForm, full_name: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Correo de Acceso</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="cliente@correo.com"
+                  value={clientForm.email}
+                  onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-semibold text-slate-300">Contraseña Asignada</label>
+                  <button type="button" onClick={handleGeneratePassword} className="text-cyan-400 text-xs hover:underline flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3" /> Generar otra
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={clientForm.password}
+                    onChange={(e) => setClientForm({ ...clientForm, password: e.target.value })}
+                    className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-cyan-300 font-mono focus:border-cyan-400 outline-none"
+                  />
+                  <Key className="w-4 h-4 text-slate-500 absolute right-3 top-2.5" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Servicio / Plataforma</label>
+                <select
+                  value={clientForm.platform_id}
+                  onChange={(e) => setClientForm({ ...clientForm, platform_id: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-cyan-400 outline-none"
+                >
+                  <option value="">Selecciona un servicio...</option>
+                  {platforms.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Días de Vigencia</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[15, 30, 60].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setClientForm({ ...clientForm, days: d })}
+                      className={`py-1.5 rounded-lg text-xs font-semibold border ${
+                        clientForm.days === d ? "bg-cyan-500/20 border-cyan-400 text-cyan-300" : "bg-slate-900 border-white/10 text-slate-400"
+                      }`}
+                    >
+                      {d} días
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowClientModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-slate-400 hover:text-white text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                >
+                  Crear en Supabase
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Nuevo Producto */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0D1322] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-1">Añadir Nuevo Servicio a la Vitrina</h2>
+            <p className="text-xs text-slate-400 mb-6">Aparecerá automáticamente en la página principal.</p>
+
+            <form onSubmit={handleCreateProduct} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Nombre del Servicio</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Runway Gen-3 / Midjourney"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Etiqueta de Estado (Badge)</label>
+                <input
+                  type="text"
+                  required
+                  value={productForm.badge}
+                  onChange={(e) => setProductForm({ ...productForm, badge: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Descripción de la Tarjeta</label>
+                <textarea
+                  required
+                  rows={2}
+                  placeholder="Generación de video y efectos visuales de alta gama..."
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Etiquetas (separadas por coma)</label>
+                <input
+                  type="text"
+                  placeholder="Video, 4K, Cinematográfico"
+                  value={productForm.tags}
+                  onChange={(e) => setProductForm({ ...productForm, tags: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">URL Oficial de Acceso</label>
+                <input
+                  type="url"
+                  required
+                  value={productForm.access_url}
+                  onChange={(e) => setProductForm({ ...productForm, access_url: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:border-emerald-400 outline-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowProductModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-slate-400 hover:text-white text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                >
+                  Guardar Servicio
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
 }
