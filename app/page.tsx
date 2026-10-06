@@ -80,56 +80,56 @@ export default function LandingPage() {
           </div>
         </nav>
       </header>
-
-      {/* 2. Hero con Carrusel de Marcas de IA en Rotación */}
-      <section className="relative pt-10 pb-20 px-4 text-center overflow-hidden">
         
-        {/* Carrusel en Movimiento con Tarjetas de IA */}
-        <div className={`absolute inset-0 z-0 flex flex-col justify-center gap-4 pointer-events-none scale-105 transition-opacity ${
-          isDark ? "opacity-25" : "opacity-35"
+{/* 2. Hero con Carrusel de Marcas de IA Visible */}
+      <section className="relative pt-12 pb-24 px-4 text-center overflow-hidden">
+        
+        {/* Carrusel en Movimiento con Tarjetas de IA Visibles */}
+        <div className={`absolute inset-0 z-0 flex flex-col justify-center gap-5 pointer-events-none scale-105 transition-opacity ${
+          isDark ? "opacity-60" : "opacity-75"
         }`}>
-          <div className="flex gap-4 animate-[marquee_45s_linear_infinite] whitespace-nowrap">
+          <div className="flex gap-5 animate-[marquee_45s_linear_infinite] whitespace-nowrap">
             {[...AI_BRANDS_ROW1, ...AI_BRANDS_ROW1].map((item, i) => (
-              <div key={i} className={`w-64 h-32 rounded-2xl overflow-hidden flex-shrink-0 border relative shadow-sm ${
-                isDark ? "border-white/10 bg-[#161D2E]" : "border-stone-300/70 bg-white"
+              <div key={i} className={`w-72 h-36 rounded-2xl overflow-hidden flex-shrink-0 border relative shadow-md ${
+                isDark ? "border-white/15 bg-[#161D2E]" : "border-stone-300 bg-white"
               }`}>
-                <img src={item.img} alt={item.name} className="w-full h-full object-cover opacity-60" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3 flex flex-col justify-end text-left text-white">
-                  <span className="text-[10px] tracking-wider uppercase font-semibold text-amber-300">{item.tag}</span>
-                  <span className="text-xs font-bold font-serif">{item.name}</span>
+                <img src={item.img} alt={item.name} className="w-full h-full object-cover opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3.5 flex flex-col justify-end text-left text-white">
+                  <span className="text-[11px] tracking-wider uppercase font-bold text-amber-400">{item.tag}</span>
+                  <span className="text-sm font-bold font-serif">{item.name}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex gap-4 animate-[marquee-reverse_50s_linear_infinite] whitespace-nowrap">
+          <div className="flex gap-5 animate-[marquee-reverse_50s_linear_infinite] whitespace-nowrap">
             {[...AI_BRANDS_ROW2, ...AI_BRANDS_ROW2].map((item, i) => (
-              <div key={i} className={`w-64 h-32 rounded-2xl overflow-hidden flex-shrink-0 border relative shadow-sm ${
-                isDark ? "border-white/10 bg-[#161D2E]" : "border-stone-300/70 bg-white"
+              <div key={i} className={`w-72 h-36 rounded-2xl overflow-hidden flex-shrink-0 border relative shadow-md ${
+                isDark ? "border-white/15 bg-[#161D2E]" : "border-stone-300 bg-white"
               }`}>
-                <img src={item.img} alt={item.name} className="w-full h-full object-cover opacity-60" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3 flex flex-col justify-end text-left text-white">
-                  <span className="text-[10px] tracking-wider uppercase font-semibold text-cyan-300">{item.tag}</span>
-                  <span className="text-xs font-bold font-serif">{item.name}</span>
+                <img src={item.img} alt={item.name} className="w-full h-full object-cover opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-3.5 flex flex-col justify-end text-left text-white">
+                  <span className="text-[11px] tracking-wider uppercase font-bold text-cyan-400">{item.tag}</span>
+                  <span className="text-sm font-bold font-serif">{item.name}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Velo translúcido para contraste */}
+          {/* Velo translúcido suavizado para que las imágenes se vean con claridad */}
           <div className={`absolute inset-0 transition-colors ${
             isDark 
-              ? "bg-gradient-to-b from-[#0A0D14]/85 via-[#0A0D14]/95 to-[#0A0D14]" 
-              : "bg-gradient-to-b from-[#FDFBF7]/85 via-[#FDFBF7]/95 to-[#FDFBF7]"
+              ? "bg-gradient-to-b from-[#0A0D14]/50 via-[#0A0D14]/70 to-[#0A0D14]" 
+              : "bg-gradient-to-b from-[#FDFBF7]/50 via-[#FDFBF7]/70 to-[#FDFBF7]"
           }`} />
         </div>
 
-        {/* Textos del Hero */}
-        <div className="relative z-10 max-w-3xl mx-auto space-y-6 pt-6">
-          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-medium tracking-widest uppercase transition-colors ${
+        {/* Textos del Hero con sombra para garantizar lectura perfecta */}
+        <div className="relative z-10 max-w-3xl mx-auto space-y-6 pt-6 drop-shadow-sm">
+          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-medium tracking-widest uppercase transition-colors backdrop-blur-md ${
             isDark 
-              ? "bg-white/5 border-white/10 text-stone-300" 
-              : "bg-white/80 border-stone-300/80 text-stone-700 shadow-sm"
+              ? "bg-[#0A0D14]/80 border-white/15 text-stone-300" 
+              : "bg-white/90 border-stone-300 text-stone-700 shadow-sm"
           }`}>
             <Sparkle className="w-3.5 h-3.5 text-amber-500" /> Licenciamiento Directo & Exclusivo
           </div>
@@ -139,8 +139,8 @@ export default function LandingPage() {
             <span className="italic font-normal text-amber-600">licenciamiento seguro</span> a herramientas de IA
           </h1>
 
-          <p className={`text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed ${
-            isDark ? "text-stone-400" : "text-stone-600"
+          <p className={`text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed backdrop-blur-[2px] ${
+            isDark ? "text-stone-300" : "text-stone-700"
           }`}>
             Conexión inmediata a modelos líderes de inteligencia artificial y suites de diseño con sesiones estables y soporte directo.
           </p>
@@ -148,7 +148,7 @@ export default function LandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               href="/portal"
-              className={`text-sm font-medium px-6 py-3 rounded-xl flex items-center gap-2 shadow-sm transition-all ${
+              className={`text-sm font-medium px-6 py-3 rounded-xl flex items-center gap-2 shadow-md transition-all ${
                 isDark 
                   ? "bg-stone-100 hover:bg-white text-stone-950" 
                   : "bg-stone-900 hover:bg-stone-800 text-stone-50"
@@ -158,10 +158,10 @@ export default function LandingPage() {
             </Link>
             <a
               href="#catalogo"
-              className={`text-sm font-medium px-5 py-3 rounded-xl border transition-all ${
+              className={`text-sm font-medium px-5 py-3 rounded-xl border transition-all backdrop-blur-md ${
                 isDark 
-                  ? "bg-white/5 border-white/10 hover:bg-white/10 text-stone-200" 
-                  : "bg-white border-stone-300/80 hover:bg-stone-50 text-stone-700 shadow-sm"
+                  ? "bg-[#0A0D14]/60 border-white/15 hover:bg-white/10 text-stone-200" 
+                  : "bg-white/80 border-stone-300 hover:bg-white text-stone-700 shadow-sm"
               }`}
             >
               Ver Servicios ↓
