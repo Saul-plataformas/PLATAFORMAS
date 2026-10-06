@@ -6,16 +6,9 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/cron/decrement-days
  *
- * Endpoint de mantenimiento diario. Protegido con un secreto propio
- * (CRON_SECRET), NO con el JWT de usuarios.
- *
- * Configúralo en Vercel Cron o cualquier scheduler externo con:
- *   Header: Authorization: Bearer <CRON_SECRET>
- *
- * Lógica:
- *  1. Descuenta 1 día a toda suscripción con status = 'active'
- *     y days_remaining > 0.
- *  2. Marca como 'expired' las que lleguen a 0.
+ * Endpoint de mantenimiento diario. Protegido con CRON_SECRET.
+ * 1. Ejecuta la función RPC en Supabase para descontar 1 día de forma atómica.
+ * 2. Marca como 'expired' las suscripciones en client_subscriptions que lleguen a 0.
  */
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization") ?? "";
@@ -28,9 +21,7 @@ export async function POST(request: Request) {
 
   const supabase = getSupabaseAdmin();
 
-  // 1. Descontar 1 día a las suscripciones activas con saldo > 0.
-  //    Se usa una función SQL (ver sql/decrement_function.sql) para
-  //    hacerlo de forma atómica en una sola sentencia.
+  // 1. Descontar 1 día a las suscripciones activas
   const { data: decremented, error: decrementError } = await supabase.rpc(
     "decrement_active_subscriptions"
   );
@@ -42,9 +33,9 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Expirar las que llegaron a 0 días
+  // 2. Expirar las que llegaron a 0 días en la tabla REAL: client_subscriptions
   const { data: expired, error: expireError } = await supabase
-    .from("suscripciones")
+    .from("client_subscriptions")
     .update({ status: "expired" })
     .eq("status", "active")
     .lte("days_remaining", 0)
