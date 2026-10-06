@@ -2,43 +2,101 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Sparkles, MessageCircle, ArrowRight, Sun, Moon, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
+import { Sparkles, MessageCircle, Sun, Moon, ChevronLeft, ChevronRight, HelpCircle } from "lucide-react";
 
-// Colección 1 de Logos Oficiales de IA & Producción Creativa
-const SLIDE_1_LOGOS = {
-  heroTitle: "NexusGate",
-  heroSubtitle: "Acceso exclusivo y licenciamiento corporativo seguro a herramientas líderes de IA.",
-  c1: { name: "ChatGPT", co: "OpenAI", logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg", tag: "LLM" },
-  c2: { name: "Claude 3.5", co: "Anthropic", logo: "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg", tag: "Coding" },
-  c3: { name: "Leonardo AI", co: "Creative Engine", logo: "https://cdn.worldvectorlogo.com/logos/leonardo-ai.svg", tag: "Generación" },
-  c4: { name: "Gemini Ultra", co: "Google AI", logo: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg", tag: "Multimodal" },
-  c5: { name: "Midjourney v6", co: "Visual Arts", logo: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png", tag: "Design" },
-  c6: { name: "Photoshop AI", co: "Adobe Firefly", logo: "https://upload.wikimedia.org/wikipedia/commons/a/af/Adobe_Photoshop_CC_icon.svg", tag: "Creative" },
-  c7: { name: "Runway Gen-3", co: "Video Studio", logo: "https://cdn.worldvectorlogo.com/logos/runway-1.svg", tag: "Cinema" },
-  c8: { name: "Cursor AI", co: "Anysphere", logo: "https://www.vectorlogo.zone/logos/cursor/cursor-icon.svg", tag: "Dev Suite" },
-  c9: { name: "ElevenLabs", co: "Voice Engine", logo: "https://cdn.worldvectorlogo.com/logos/elevenlabs-1.svg", tag: "Audio" },
-  c10: { name: "Perplexity", co: "AI Search", logo: "https://cdn.worldvectorlogo.com/logos/perplexity-ai.svg", tag: "Research" },
-  c11: { name: "Canva Pro", co: "Design Suite", logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg", tag: "Branding" },
+// SVGs Oficiales Vectoriales Integrados (Nunca fallan ni se rompen)
+const ICONS: Record<string, React.ReactNode> = {
+  chatgpt: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-emerald-400">
+      <path d="M22.28 9.37a5.99 5.99 0 0 0-.52-4.93 6.07 6.07 0 0 0-6.6-2.73A6.08 6.08 0 0 0 10.3 0a6.07 6.07 0 0 0-5.8 4.25 6.06 6.06 0 0 0-3.9 2.84 6.06 6.06 0 0 0 .73 7.15 6 6 0 0 0 .52 4.93 6.07 6.07 0 0 0 6.6 2.73A6.04 6.04 0 0 0 13.24 24a6.07 6.07 0 0 0 5.8-4.25 6.06 6.06 0 0 0 3.9-2.84 6.06 6.06 0 0 0-.66-7.54ZM13.7 22.38a4.57 4.57 0 0 1-2.9-.66l.15-.08 4.8-2.77a.75.75 0 0 0 .38-.65v-6.78l2.03 1.17v5.6a4.58 4.58 0 0 1-4.46 4.17Zm-8.4-3.4a4.54 4.54 0 0 1-.67-2.92l.14.09 4.8 2.77a.74.74 0 0 0 .76 0l5.88-3.39v2.35l-4.85 2.8a4.58 4.58 0 0 1-6.06-1.7ZM2.25 9.77a4.54 4.54 0 0 1 2.23-2.27v5.7a.73.73 0 0 0 .38.65l5.87 3.39-2.03 1.17-4.85-2.8a4.58 4.58 0 0 1-1.6-5.84Zm15.93 1.7-5.88-3.4 2.03-1.16 4.85 2.8a4.58 4.58 0 0 1 1.6 5.83 4.55 4.55 0 0 1-2.22 2.28v-5.7a.74.74 0 0 0-.38-.65Zm2.7-2.65-.15-.08-4.8-2.78a.74.74 0 0 0-.75 0L9.3 9.35V7l4.85-2.8a4.58 4.58 0 0 1 6.72 4.62ZM8.03 10.4 10.06 9.23l4.85 2.8v2.34l-4.85 2.8-2.03-1.17V10.4Z"/>
+    </svg>
+  ),
+  claude: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-[#D97706]">
+      <path d="m14.73 3.6-6.4 16.8h3.3l1.3-3.6h5.8l1.3 3.6h3.3L16.93 3.6h-2.2Zm-1.1 10.8 2.2-6.2 2.2 6.2h-4.4ZM2.53 16.2l3.4-9.1h3.1l-3.4 9.1H2.53Z"/>
+    </svg>
+  ),
+  gemini: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-blue-400">
+      <path d="M12 0C12 6.627 6.627 12 0 12c6.627 0 12 5.373 12 12 0-6.627 5.373-12 12-12-6.627 0-12-5.373-12-12Z"/>
+    </svg>
+  ),
+  leonardo: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-fuchsia-400">
+      <path d="M12 2L2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+  ),
+  midjourney: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-cyan-400">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2Zm-1 15-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9Z"/>
+    </svg>
+  ),
+  photoshop: (
+    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#001E36] border border-[#00A8FF]/40 flex items-center justify-center font-extrabold text-3xl md:text-4xl text-[#00A8FF] shadow-inner font-sans">
+      Ps
+    </div>
+  ),
+  runway: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-purple-400">
+      <path d="M4 4h4v16H4V4Zm6 0h4v16h-4V4Zm6 0h4v16h-4V4Z"/>
+    </svg>
+  ),
+  cursor: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-sky-400">
+      <path d="M3 2l10 17 3-6 6-3L3 2Z"/>
+    </svg>
+  ),
+  elevenlabs: (
+    <div className="flex gap-1.5 items-center justify-center h-16 md:h-20">
+      <span className="w-3 md:w-4 h-12 bg-orange-400 rounded-full animate-pulse" />
+      <span className="w-3 md:w-4 h-16 bg-amber-400 rounded-full" />
+      <span className="w-3 md:w-4 h-10 bg-orange-500 rounded-full" />
+    </div>
+  ),
+  perplexity: (
+    <svg viewBox="0 0 24 24" className="w-16 h-16 md:w-20 md:h-20 fill-teal-400">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm1 14.93V15a1 1 0 0 1 2 0v1.93A8 8 0 0 1 7.07 13H9a1 1 0 0 1 0 2H7.07A8 8 0 0 1 11 8.07V10a1 1 0 0 1 2 0V8.07A8 8 0 0 1 18.93 12H17a1 1 0 0 1 0-2h1.93A8 8 0 0 1 13 16.93Z"/>
+    </svg>
+  ),
+  canva: (
+    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-tr from-sky-500 to-teal-400 flex items-center justify-center font-bold text-2xl md:text-3xl text-white font-serif italic shadow-md">
+      C
+    </div>
+  ),
 };
 
-// Colección 2 de Logos Oficiales de Producción & Suites Creativas
-const SLIDE_2_LOGOS = {
-  heroTitle: "Creative Studio",
-  heroSubtitle: "Infraestructura privada y persistencia de sesión sin cortes para diseñadores y desarrolladores.",
-  c1: { name: "Leonardo AI", co: "Canvas Studio", logo: "https://cdn.worldvectorlogo.com/logos/leonardo-ai.svg", tag: "Producción" },
-  c2: { name: "Midjourney v6", co: "Imagen 8K", logo: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Midjourney_Emblem.png", tag: "Visual" },
-  c3: { name: "ChatGPT Pro", co: "OpenAI Pro", logo: "https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg", tag: "GPT-4o" },
-  c4: { name: "Kling AI", co: "Cinematic Video", logo: "https://cdn.worldvectorlogo.com/logos/runway-1.svg", tag: "Motion" },
-  c5: { name: "Claude 3.5 Sonnet", co: "Anthropic", logo: "https://upload.wikimedia.org/wikipedia/commons/7/78/Anthropic_logo.svg", tag: "Opus" },
-  c6: { name: "Cursor Pro", co: "Code AI", logo: "https://www.vectorlogo.zone/logos/cursor/cursor-icon.svg", tag: "IDE" },
-  c7: { name: "Photoshop & Firefly", co: "Adobe Creative", logo: "https://upload.wikimedia.org/wikipedia/commons/a/af/Adobe_Photoshop_CC_icon.svg", tag: "Edición" },
-  c8: { name: "Gemini Pro", co: "Google Cloud", logo: "https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg", tag: "DeepMind" },
-  c9: { name: "ElevenLabs Prime", co: "Clonación Voz", logo: "https://cdn.worldvectorlogo.com/logos/elevenlabs-1.svg", tag: "Speech" },
-  c10: { name: "Canva Studio", co: "Marketing", logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Canva_icon_2021.svg", tag: "Vector" },
-  c11: { name: "Runway Pro", co: "VFX & AI", logo: "https://cdn.worldvectorlogo.com/logos/runway-1.svg", tag: "4K Render" },
-};
-
-const SLIDES = [SLIDE_1_LOGOS, SLIDE_2_LOGOS];
+const SLIDES = [
+  {
+    heroTitle: "NexusGate",
+    heroSubtitle: "Acceso corporativo y licenciamiento persistente a modelos líderes de Inteligencia Artificial.",
+    c1: { id: "chatgpt", name: "ChatGPT Pro", tag: "OpenAI" },
+    c2: { id: "claude", name: "Claude 3.5", tag: "Anthropic" },
+    c3: { id: "leonardo", name: "Leonardo AI", tag: "Production" },
+    c4: { id: "gemini", name: "Gemini Ultra", tag: "Google" },
+    c5: { id: "midjourney", name: "Midjourney v6", tag: "Creative" },
+    c6: { id: "photoshop", name: "Photoshop AI", tag: "Adobe" },
+    c7: { id: "runway", name: "Runway Gen-3", tag: "Cinema" },
+    c8: { id: "cursor", name: "Cursor AI", tag: "Dev" },
+    c9: { id: "elevenlabs", name: "ElevenLabs", tag: "Voice" },
+    c10: { id: "perplexity", name: "Perplexity", tag: "Search" },
+    c11: { id: "canva", name: "Canva Pro", tag: "Design" },
+  },
+  {
+    heroTitle: "Creative Core",
+    heroSubtitle: "Suites de producción visual, animación y desarrollo enrutadas por proxies dedicados.",
+    c1: { id: "leonardo", name: "Leonardo AI", tag: "Production" },
+    c2: { id: "midjourney", name: "Midjourney v6", tag: "Creative" },
+    c3: { id: "chatgpt", name: "ChatGPT Pro", tag: "OpenAI" },
+    c4: { id: "claude", name: "Claude 3.5", tag: "Anthropic" },
+    c5: { id: "runway", name: "Runway Gen-3", tag: "Cinema" },
+    c6: { id: "cursor", name: "Cursor AI", tag: "Dev" },
+    c7: { id: "photoshop", name: "Photoshop AI", tag: "Adobe" },
+    c8: { id: "gemini", name: "Gemini Ultra", tag: "Google" },
+    c9: { id: "elevenlabs", name: "ElevenLabs", tag: "Voice" },
+    c10: { id: "canva", name: "Canva Pro", tag: "Design" },
+    c11: { id: "perplexity", name: "Perplexity", tag: "Search" },
+  }
+];
 
 export default function LandingPage() {
   const [platforms, setPlatforms] = useState<any[]>([]);
@@ -61,35 +119,28 @@ export default function LandingPage() {
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
 
-  // Componente individual de Tarjeta Logo con interacción suave
-  const LogoCard = ({ item, className = "" }: { item: any; className?: string }) => (
+  // Tarjeta de Logo Grande y Prominente
+  const BigLogoCard = ({ item, className = "" }: { item: any; className?: string }) => (
     <div
-      className={`rounded-2xl md:rounded-3xl border p-4 flex flex-col justify-between group transition-all duration-500 ease-out hover:scale-95 cursor-pointer backdrop-blur-md shadow-sm ${
+      className={`rounded-2xl md:rounded-3xl border p-4 flex flex-col items-center justify-center relative group transition-all duration-500 ease-out hover:scale-95 cursor-pointer backdrop-blur-xl shadow-lg overflow-hidden ${
         isDark
-          ? "bg-[#0E1424]/80 border-white/10 hover:border-cyan-500/40 hover:bg-[#131B30]"
-          : "bg-white/80 border-stone-200 hover:border-cyan-600/40 hover:bg-white"
+          ? "bg-[#0B101D]/90 border-white/10 hover:border-cyan-500/50 hover:bg-[#10172A]"
+          : "bg-white/90 border-stone-200 hover:border-cyan-600/50 hover:bg-stone-50"
       } ${className}`}
     >
-      <div className="flex justify-between items-start">
-        <div
-          className={`w-11 h-11 rounded-xl p-2 flex items-center justify-center border transition-transform duration-500 group-hover:scale-110 ${
-            isDark ? "bg-white/10 border-white/10" : "bg-stone-50 border-stone-200"
-          }`}
-        >
-          <img src={item.logo} alt={item.name} className="w-full h-full object-contain filter drop-shadow-sm" />
-        </div>
-        <span
-          className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-            isDark ? "bg-white/5 border-white/10 text-cyan-300" : "bg-stone-100 border-stone-200 text-stone-700"
-          }`}
-        >
-          {item.tag}
-        </span>
+      {/* Etiqueta flotante discreta */}
+      <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/10 bg-white/5 opacity-70">
+        {item.tag}
+      </span>
+
+      {/* Ícono / Isotipo en Tamaño Grande */}
+      <div className="flex-1 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 drop-shadow-md py-2">
+        {ICONS[item.id]}
       </div>
 
-      <div>
-        <h4 className="text-sm font-bold tracking-tight text-current truncate">{item.name}</h4>
-        <p className="text-[11px] opacity-60 truncate">{item.co}</p>
+      {/* Nombre al pie */}
+      <div className="text-center w-full mt-1">
+        <h4 className="text-sm font-bold tracking-tight truncate">{item.name}</h4>
       </div>
     </div>
   );
@@ -100,22 +151,19 @@ export default function LandingPage() {
         isDark ? "bg-[#07090E] text-stone-100" : "bg-[#FDFBF7] text-stone-900"
       }`}
     >
-      {/* 1. Header Minimalista: Logo + Botón de Asistencia + Sesión */}
+      {/* 1. Header Minimalista */}
       <header className="sticky top-4 z-50 max-w-7xl mx-auto px-4">
         <nav
           className={`border rounded-full px-6 py-2.5 flex items-center justify-between backdrop-blur-xl shadow-lg transition-colors ${
             isDark ? "bg-[#0E131F]/90 border-white/10" : "bg-white/90 border-stone-200"
           }`}
         >
-          {/* Logo Principal */}
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
             <span className="font-extrabold tracking-wider text-sm">NexusGate</span>
           </div>
 
-          {/* Acciones Derecha (Asistencia, Tema, Portal) */}
           <div className="flex items-center gap-2.5">
-            {/* Botón Directo de Asistencia Técnica */}
             <a
               href="https://wa.me/59164695256?text=Hola,%20solicito%20asistencia%20tecnica%20con%20mi%20licencia"
               target="_blank"
@@ -129,7 +177,6 @@ export default function LandingPage() {
               <HelpCircle className="w-3.5 h-3.5 text-emerald-400" /> Asistencia 24/7
             </a>
 
-            {/* Alternador de Modo Claro / Oscuro */}
             <button
               onClick={() => setIsDark(!isDark)}
               className={`p-2 rounded-full border transition-all ${
@@ -140,7 +187,6 @@ export default function LandingPage() {
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
 
-            {/* Botón de Acceso al Cockpit / Portal */}
             <Link
               href="/portal"
               className={`text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1.5 transition-all shadow-sm ${
@@ -153,23 +199,22 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      {/* 2. MOSAICO INTERACTIVO DE LOGOS DE IA & PRODUCCIÓN */}
+      {/* 2. Mosaico Interactivo de Logos Grandes */}
       <main className="max-w-7xl mx-auto px-4 pt-6 pb-20 space-y-16">
         <section className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 auto-rows-[130px] md:auto-rows-[150px]">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4 auto-rows-[160px] md:auto-rows-[180px]">
             {/* Fila 1 */}
-            <LogoCard item={data.c1} />
-            <LogoCard item={data.c2} />
-            <LogoCard item={data.c3} className="col-span-2" />
-            <LogoCard item={data.c4} />
-            <LogoCard item={data.c5} />
+            <BigLogoCard item={data.c1} />
+            <BigLogoCard item={data.c2} />
+            <BigLogoCard item={data.c3} className="col-span-2" />
+            <BigLogoCard item={data.c4} />
+            <BigLogoCard item={data.c5} />
 
-            {/* Fila 2 (CON HERO CARD CENTRAL ENORME) */}
-            <LogoCard item={data.c6} className="col-span-2 md:col-span-1" />
+            {/* Fila 2 (Con Tarjeta Central Destacada) */}
+            <BigLogoCard item={data.c6} className="col-span-2 md:col-span-1" />
 
-            {/* Tarjeta Central Destacada */}
             <div
-              className={`col-span-2 md:col-span-4 row-span-1 rounded-2xl md:rounded-3xl border relative flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-700 backdrop-blur-xl ${
+              className={`col-span-2 md:col-span-4 row-span-1 rounded-2xl md:rounded-3xl border relative flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-700 backdrop-blur-2xl ${
                 isDark
                   ? "bg-gradient-to-br from-[#0F1626] to-[#0A0E18] border-white/15"
                   : "bg-gradient-to-br from-white to-stone-100 border-stone-200"
@@ -184,14 +229,14 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <LogoCard item={data.c7} className="col-span-2 md:col-span-1" />
+            <BigLogoCard item={data.c7} className="col-span-2 md:col-span-1" />
 
             {/* Fila 3 */}
-            <LogoCard item={data.c8} />
-            <LogoCard item={data.c9} />
-            <LogoCard item={data.c10} />
-            <LogoCard item={data.c11} />
-            <LogoCard item={data.c3} className="col-span-2" />
+            <BigLogoCard item={data.c8} />
+            <BigLogoCard item={data.c9} />
+            <BigLogoCard item={data.c10} />
+            <BigLogoCard item={data.c11} />
+            <BigLogoCard item={data.c3} className="col-span-2" />
           </div>
 
           {/* Paginador Inferior (< ••• >) */}
@@ -230,7 +275,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 3. CATÁLOGO CONECTADO A SUPABASE EN TIEMPO REAL */}
+        {/* 3. Catálogo Conectado a Supabase */}
         <section id="catalogo" className="space-y-6 pt-4">
           <div className="flex justify-between items-end border-b pb-4 border-white/10">
             <div>
