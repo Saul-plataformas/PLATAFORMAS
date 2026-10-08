@@ -14,10 +14,11 @@ export default function AdminConsole() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [proxies, setProxies] = useState<any[]>([]);
 
-  // Modales
+  // Modales existentes + Modal Cuenta Matriz
   const [showClientModal, setShowClientModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showProxyModal, setShowProxyModal] = useState(false);
+  const [showMasterModal, setShowMasterModal] = useState(false);
 
   // Formularios
   const [clientForm, setClientForm] = useState({
@@ -45,6 +46,15 @@ export default function AdminConsole() {
     username: "",
     password: "",
     max_users: 5
+  });
+
+  // Formulario de Cuenta Matriz Original
+  const [masterForm, setMasterForm] = useState({
+    platform_id: "",
+    master_email: "",
+    master_password: "",
+    totp_seed: "",
+    access_url: ""
   });
 
   const fetchData = async () => {
@@ -137,6 +147,41 @@ export default function AdminConsole() {
     }
   };
 
+  // Manejador para guardar o actualizar credenciales originales
+  const handleSaveMasterAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/v1/licenses/manage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "UPDATE_PLATFORM_CREDS",
+          ...masterForm
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setShowMasterModal(false);
+      setMasterForm({ platform_id: "", master_email: "", master_password: "", totp_seed: "", access_url: "" });
+      fetchData();
+    } catch (err: any) {
+      alert("Error guardando cuenta matriz: " + err.message);
+    }
+  };
+
+  const openMasterModalForPlatform = (platformId: string) => {
+    const selected = platforms.find(p => p.id === platformId);
+    setMasterForm({
+      platform_id: platformId,
+      master_email: selected?.master_email || "",
+      master_password: selected?.master_password || "",
+      totp_seed: selected?.totp_seed || "",
+      access_url: selected?.access_url || ""
+    });
+    setShowMasterModal(true);
+  };
+
   const handleDelete = async (id: string, type: "subscription" | "platform" | "proxy") => {
     if (!confirm("¿Eliminar este registro permanentemente?")) return;
     try {
@@ -189,6 +234,19 @@ export default function AdminConsole() {
               title="Cambiar tema"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* BOTÓN NUEVO: Cuenta Matriz Original */}
+            <button
+              onClick={() => {
+                setMasterForm({ platform_id: "", master_email: "", master_password: "", totp_seed: "", access_url: "" });
+                setShowMasterModal(true);
+              }}
+              className={`text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all border ${
+                isDark ? "bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20" : "bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100 shadow-sm"
+              }`}
+            >
+              <Key className="w-4 h-4 text-amber-600 inline" /> Cuenta Matriz Original
             </button>
 
             <button
@@ -397,25 +455,56 @@ export default function AdminConsole() {
           </div>
         )}
 
-        {/* CONTENIDO 3: Servicios */}
+        {/* CONTENIDO 3: Servicios (Con visor y acceso directo a Cuenta Matriz) */}
         {activeTab === "products" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {platforms.map((p) => (
-              <div key={p.id} className={`border rounded-2xl p-6 relative ${
+              <div key={p.id} className={`border rounded-2xl p-6 relative flex flex-col justify-between ${
                 isDark ? "bg-[#111622]/80 border-white/10" : "bg-white border-stone-200 shadow-sm"
               }`}>
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200">
-                      {p.badge}
-                    </span>
-                    <h3 className="text-lg font-serif font-bold mt-2">{p.name}</h3>
+                <div>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200">
+                        {p.badge}
+                      </span>
+                      <h3 className="text-lg font-serif font-bold mt-2">{p.name}</h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openMasterModalForPlatform(p.id)}
+                        className="text-amber-600 p-1.5 hover:bg-amber-500/10 rounded-lg"
+                        title="Configurar Cuenta Matriz"
+                      >
+                        <Key className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(p.id, "platform")} className="text-rose-500 p-1.5 hover:bg-rose-500/10 rounded-lg">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={() => handleDelete(p.id, "platform")} className="text-rose-500 p-1.5 hover:bg-rose-500/10 rounded-lg">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <p className="text-xs opacity-70 mb-3 line-clamp-2">{p.description}</p>
+
+                  {/* Estado de la Cuenta Matriz Original */}
+                  <div className={`p-2.5 rounded-xl border text-[11px] mb-3 space-y-0.5 ${
+                    isDark ? "bg-black/40 border-white/5" : "bg-stone-50 border-stone-200"
+                  }`}>
+                    <div className="font-semibold text-xs text-amber-600 flex items-center justify-between">
+                      <span>Cuenta Matriz:</span>
+                      <button onClick={() => openMasterModalForPlatform(p.id)} className="underline hover:opacity-80">Editar</button>
+                    </div>
+                    <div>
+                      <span className="opacity-60">Email:</span> {p.master_email || <span className="text-rose-500 italic">No asignado</span>}
+                    </div>
+                    <div>
+                      <span className="opacity-60">Clave:</span> {p.master_password ? "••••••••" : <span className="text-rose-500 italic">Sin clave</span>}
+                    </div>
+                    <div>
+                      <span className="opacity-60">2FA / TOTP:</span> {p.totp_seed ? "Configurado ✔" : <span className="opacity-40">No</span>}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs opacity-70 mb-4 line-clamp-2">{p.description}</p>
+
                 <div className="text-xs border-t pt-3 border-stone-200/40 flex justify-between items-center opacity-60">
                   <span>URL:</span>
                   <a href={p.access_url} target="_blank" rel="noreferrer" className="text-amber-600 hover:underline flex items-center gap-1">
@@ -429,7 +518,110 @@ export default function AdminConsole() {
 
       </div>
 
-      {/* MODAL: Nuevo Cliente */}
+      {/* MODAL 1: Cuenta Matriz Original */}
+      {showMasterModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`border rounded-2xl w-full max-w-md p-6 shadow-2xl ${
+            isDark ? "bg-[#111622] border-white/10" : "bg-white border-stone-200"
+          }`}>
+            <h2 className="text-lg font-serif font-bold mb-1">Cuenta Matriz Original</h2>
+            <p className="text-xs opacity-60 mb-5">
+              Ingresa el correo y contraseña oficial que compraste para que la extensión inyecte la sesión.
+            </p>
+
+            <form onSubmit={handleSaveMasterAccount} className="space-y-3.5 text-sm">
+              <div>
+                <label className="text-xs font-semibold block mb-1">Servicio / Herramienta</label>
+                <select
+                  required
+                  value={masterForm.platform_id}
+                  onChange={(e) => {
+                    const sel = platforms.find(p => p.id === e.target.value);
+                    setMasterForm({
+                      ...masterForm,
+                      platform_id: e.target.value,
+                      master_email: sel?.master_email || "",
+                      master_password: sel?.master_password || "",
+                      totp_seed: sel?.totp_seed || "",
+                      access_url: sel?.access_url || ""
+                    });
+                  }}
+                  className="w-full bg-transparent border rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-600"
+                >
+                  <option value="">Selecciona el servicio a vincular...</option>
+                  {platforms.map((p) => (
+                    <option key={p.id} value={p.id} className="text-black">{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold block mb-1">Correo Oficial Matriz</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="cuenta_oficial@gmail.com"
+                  value={masterForm.master_email}
+                  onChange={(e) => setMasterForm({ ...masterForm, master_email: e.target.value })}
+                  className="w-full bg-transparent border rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-600"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold block mb-1">Contraseña Oficial Matriz</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contraseña original de la cuenta"
+                  value={masterForm.master_password}
+                  onChange={(e) => setMasterForm({ ...masterForm, master_password: e.target.value })}
+                  className="w-full bg-transparent border rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-600 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold block mb-1">Semilla TOTP (2FA / Google Auth) [Opcional]</label>
+                <input
+                  type="text"
+                  placeholder="Ej. JBSWY3DPEHPK3PXP (si usa autenticador)"
+                  value={masterForm.totp_seed}
+                  onChange={(e) => setMasterForm({ ...masterForm, totp_seed: e.target.value })}
+                  className="w-full bg-transparent border rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-600 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold block mb-1">URL de Destino</label>
+                <input
+                  type="url"
+                  placeholder="https://claude.ai / https://gemini.google.com"
+                  value={masterForm.access_url}
+                  onChange={(e) => setMasterForm({ ...masterForm, access_url: e.target.value })}
+                  className="w-full bg-transparent border rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-600"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMasterModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border opacity-60 hover:opacity-100 text-xs font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-sm"
+                >
+                  Guardar Cuenta Matriz
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Nuevo Cliente (tu lógica intacta) */}
       {showClientModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className={`border rounded-2xl w-full max-w-md p-6 shadow-2xl ${
@@ -548,7 +740,7 @@ export default function AdminConsole() {
         </div>
       )}
 
-      {/* MODAL: Nuevo Proxy */}
+      {/* MODAL 3: Nuevo Proxy (tu lógica intacta) */}
       {showProxyModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className={`border rounded-2xl w-full max-w-md p-6 shadow-2xl ${
@@ -627,7 +819,7 @@ export default function AdminConsole() {
         </div>
       )}
 
-      {/* MODAL: Nuevo Servicio */}
+      {/* MODAL 4: Nuevo Servicio (tu lógica intacta) */}
       {showProductModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className={`border rounded-2xl w-full max-w-md p-6 shadow-2xl ${
