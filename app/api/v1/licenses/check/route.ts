@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Buscar suscripción del cliente
+    // 3. Buscar suscripción, cuenta matriz multi-cuenta asignada y plataforma
     const { data: sub } = await supabase
       .from("client_subscriptions")
       .select(`
@@ -59,16 +59,24 @@ export async function POST(request: Request) {
         days_remaining,
         status,
         platforms ( id, name, slug, access_url, master_email, master_password, totp_seed ),
+        master_accounts ( id, account_name, email, password, totp_seed ),
         proxies ( host, port, username, password )
       `)
       .eq("client_id", client.id)
       .maybeSingle();
 
     const platform = sub?.platforms as any;
+    const masterAcc = sub?.master_accounts as any;
     const daysRemaining = sub?.days_remaining ?? 30;
     const subStatus = sub?.status || "active";
 
-    // Respuesta híbrida compatible con el Portal Web y la Extensión
+    // Prioriza la cuenta asignada en master_accounts (multi-cuenta); si no hay, usa platforms (fallback)
+    const effectiveEmail = masterAcc?.email || platform?.master_email || "";
+    const effectivePassword = masterAcc?.password || platform?.master_password || "";
+    const effectiveTotpSeed = masterAcc?.totp_seed || platform?.totp_seed || "";
+    const effectiveAccountName = masterAcc?.account_name || "Cuenta 1";
+
+    // Respuesta híbrida compatible con Portal Web (/portal) y Extensión
     return NextResponse.json({
       success: true,
       valid: true,
@@ -80,6 +88,7 @@ export async function POST(request: Request) {
       },
       suscripcion: {
         plan: platform?.name || "Acceso Autorizado",
+        account_name: effectiveAccountName,
         status: subStatus,
         days_remaining: daysRemaining
       },
@@ -89,9 +98,10 @@ export async function POST(request: Request) {
       // Para la Extensión de navegador:
       data: {
         username: client.email,
-        assigned_email: platform?.master_email || "",
-        assigned_password: platform?.master_password || "",
-        totp_seed: platform?.totp_seed || "",
+        account_type: effectiveAccountName,
+        assigned_email: effectiveEmail,
+        assigned_password: effectivePassword,
+        totp_seed: effectiveTotpSeed,
         status: subStatus === "active" && daysRemaining > 0 ? "ACTIVE" : "EXPIRED",
         days_remaining: daysRemaining,
         days_total: 30,
