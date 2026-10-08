@@ -402,7 +402,7 @@ export default function AdminConsole() {
           </div>
         )}
 
-        {/* TAB 3: Proxies */}
+     {/* TAB 3: Proxies */}
         {activeTab === "proxies" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {proxies.map((prx) => (
@@ -411,7 +411,9 @@ export default function AdminConsole() {
               }`}>
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border bg-emerald-500/10 text-emerald-600">
+                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                      prx.is_full ? "bg-rose-500/10 text-rose-600 border-rose-500/20" : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                    }`}>
                       {prx.is_full ? "Lleno" : "Disponible"}
                     </span>
                     <h3 className="text-base font-bold mt-2">{prx.name}</h3>
@@ -421,9 +423,14 @@ export default function AdminConsole() {
                   </button>
                 </div>
 
-                <div className="p-3 rounded-xl border mb-3 font-mono text-xs space-y-1 bg-stone-50 dark:bg-white/5">
-                  <div>Host: <span className="font-semibold">{prx.host}</span></div>
-                  <div>Puerto: <span className="font-semibold">{prx.port}</span></div>
+                {/* Recuadro de Host y Puerto con contraste corregido */}
+                <div className={`p-3 rounded-xl border mb-3 font-mono text-xs space-y-1 ${
+                  isDark 
+                    ? "bg-black/60 border-white/10 text-slate-200" 
+                    : "bg-stone-100 border-stone-200 text-stone-800"
+                }`}>
+                  <div>Host: <span className="font-semibold text-cyan-400">{prx.host}</span></div>
+                  <div>Puerto: <span className="font-semibold text-amber-400">{prx.port}</span></div>
                 </div>
 
                 <div className="space-y-1.5 border-t pt-3 border-stone-200/40">
@@ -431,11 +438,14 @@ export default function AdminConsole() {
                     <span>Cupos ocupados:</span>
                     <span className="font-bold">{prx.used_slots} / {prx.max_users}</span>
                   </div>
-                  <div className="w-full bg-stone-200/50 h-2 rounded-full overflow-hidden">
+                  <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? "bg-white/10" : "bg-stone-200"}`}>
                     <div 
-                      className="h-full bg-amber-600"
+                      className={`h-full ${prx.is_full ? "bg-rose-500" : "bg-amber-500"}`}
                       style={{ width: `${Math.min(100, (prx.used_slots / prx.max_users) * 100)}%` }}
                     />
+                  </div>
+                  <div className="text-right text-[11px] text-emerald-600 font-semibold">
+                    {prx.available_slots} libres
                   </div>
                 </div>
               </div>
