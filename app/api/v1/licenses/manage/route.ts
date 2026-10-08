@@ -16,7 +16,7 @@ export async function GET() {
         created_at,
         proxy_id,
         clients ( id, full_name, email, password_hash ),
-        platforms ( id, name, slug, access_url ),
+        platforms ( id, name, slug, access_url, master_email ),
         proxies ( id, name, host, port )
       `).order("created_at", { ascending: false }),
       supabase.from("proxies").select("*, client_subscriptions(count)")
@@ -26,7 +26,7 @@ export async function GET() {
     if (subsRes.error) throw subsRes.error;
     if (proxiesRes.error) throw proxiesRes.error;
 
-    // Calcular espacios disponibles en cada proxy
+    // Calcular espacios disponibles en cada proxy (tu lógica intacta)
     const proxiesWithSlots = (proxiesRes.data || []).map((p: any) => {
       const activeUsers = p.client_subscriptions?.[0]?.count || 0;
       return {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const supabase = getSupabaseAdmin();
 
-    // 1. Crear nuevo Proxy
+    // 1. Crear nuevo Proxy (tu lógica intacta)
     if (body.action === "CREATE_PROXY") {
       const { name, host, port, username, password, max_users } = body;
       const { data, error } = await supabase.from("proxies").insert({
@@ -68,9 +68,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, proxy: data });
     }
 
-    // 2. Crear nuevo Producto / Servicio
+    // 2. Crear nuevo Producto / Servicio (tu lógica intacta con soporte opcional de credenciales maestras)
     if (body.action === "CREATE_PLATFORM") {
-      const { name, slug, badge, description, tags, accent_color, access_url } = body;
+      const { name, slug, badge, description, tags, accent_color, access_url, master_email, master_password, totp_seed } = body;
       const { data, error } = await supabase.from("platforms").insert({
         name,
         slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
@@ -78,14 +78,41 @@ export async function POST(request: Request) {
         description,
         tags: tags || ["IA"],
         accent_color: accent_color || "cyan",
-        access_url: access_url || "https://chatgpt.com"
+        access_url: access_url || "https://chatgpt.com",
+        master_email: master_email ? master_email.trim() : null,
+        master_password: master_password ? master_password.trim() : null,
+        totp_seed: totp_seed ? totp_seed.trim() : null
       }).select().single();
 
       if (error) throw error;
       return NextResponse.json({ success: true, platform: data });
     }
 
-    // 3. Crear Cliente con Asignación de Proxy
+    // ⭐ 2.1 NUEVO: Actualizar la cuenta matriz original de una plataforma existente
+    if (body.action === "UPDATE_PLATFORM_CREDS") {
+      const { platform_id, master_email, master_password, totp_seed, access_url } = body;
+      if (!platform_id) {
+        return NextResponse.json({ error: "platform_id requerido" }, { status: 400 });
+      }
+
+      const updatePayload: any = {};
+      if (master_email !== undefined) updatePayload.master_email = master_email.trim();
+      if (master_password !== undefined) updatePayload.master_password = master_password.trim();
+      if (totp_seed !== undefined) updatePayload.totp_seed = totp_seed ? totp_seed.trim() : null;
+      if (access_url !== undefined) updatePayload.access_url = access_url.trim();
+
+      const { data, error } = await supabase
+        .from("platforms")
+        .update(updatePayload)
+        .eq("id", platform_id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return NextResponse.json({ success: true, platform: data });
+    }
+
+    // 3. Crear Cliente con Asignación de Proxy (tu lógica intacta)
     const { full_name, email, password, platform_id, proxy_id, days } = body;
     if (!email || !password || !full_name) {
       return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
@@ -93,7 +120,7 @@ export async function POST(request: Request) {
 
     const { data: client, error: clientErr } = await supabase
       .from("clients")
-      .upsert({ full_name, email, password_hash: password }, { onConflict: "email" })
+      .upsert({ full_name, email: email.trim().toLowerCase(), password_hash: password }, { onConflict: "email" })
       .select()
       .single();
 
