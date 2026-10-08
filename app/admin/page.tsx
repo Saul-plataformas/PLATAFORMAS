@@ -374,11 +374,17 @@ export default function AdminConsole() {
                     </button>
                   </div>
 
-                  <div className="p-3 rounded-xl border text-xs font-mono space-y-1 mb-4 bg-stone-50 dark:bg-white/5 border-stone-200 dark:border-white/5">
-                    <div>Email: <span className="font-semibold">{acc.email}</span></div>
-                    <div>Clave: <span className="opacity-60">••••••••••</span></div>
-                    <div>2FA / TOTP: <span>{acc.totp_seed ? "Configurado ✔" : "No"}</span></div>
-                  </div>
+                  <div className={`p-3 rounded-xl border text-xs font-mono space-y-1.5 mb-4 ${
+  isDark 
+    ? "bg-black/60 border-white/10 text-slate-200" 
+    : "bg-stone-100 border-stone-200 text-stone-800"
+}`}>
+  <div>Email: <span className="font-semibold text-cyan-400">{acc.email}</span></div>
+  <div>Clave: <span className="text-slate-400">••••••••••</span></div>
+  <div>2FA / TOTP: <span className={acc.totp_seed ? "text-emerald-400 font-semibold" : "text-slate-500"}>
+    {acc.totp_seed ? "Configurado ✔" : "No"}
+  </span></div>
+</div>
 
                   {/* Contador de Usuarios Asignados */}
                   <div className="space-y-1.5 border-t pt-3 border-stone-200/40">
